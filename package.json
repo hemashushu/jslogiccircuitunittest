@@ -1,0 +1,35 @@
+{
+    "name": "jslogiccircuitunittest",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "mocha"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/hemashushu/jslogiccircuitunittest.git"
+    },
+    "keywords": [
+        "digital",
+        "circuit",
+        "logic",
+        "unit test"
+    ],
+    "author": "Hippo Spark <hippospark@gmail.com> (https://twitter.com/hemashushu)",
+    "license": "SEE LICENSE IN <LICENSE.md>",
+    "bugs": {
+        "url": "https://github.com/hemashushu/jslogiccircuitunittest/issues"
+    },
+    "homepage": "https://github.com/hemashushu/jslogiccircuitunittest",
+    "devDependencies": {
+        "mocha": "^8.3.2"
+    },
+    "dependencies": {
+        "jsbinary": "github:hemashushu/jsbinary",
+        "jsexception": "github:hemashushu/jsexception",
+        "jslogiccircuit": "github:hemashushu/jslogiccircuit",
+        "jstextfile": "github:hemashushu/jstextfile",
+        "jsvariablecalculator": "github:hemashushu/jsvariablecalculator"
+    }
+}
