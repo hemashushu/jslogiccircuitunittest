@@ -29,6 +29,7 @@
         "jsbinary": "github:hemashushu/jsbinary",
         "jsexception": "github:hemashushu/jsexception",
         "jslogiccircuit": "github:hemashushu/jslogiccircuit",
+        "jsobjectutils": "github:hemashushu/jsobjectutils",
         "jstextfile": "github:hemashushu/jstextfile",
         "jsvariablecalculator": "github:hemashushu/jsvariablecalculator"
     }
