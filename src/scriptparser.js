@@ -35,38 +35,43 @@ class TestScriptParser {
         let frontMatterItems = []; // [{key:..., value:...},...]
         let portItems;
 
-        let dataRowStack = [];
+        let dataRowItemStack = [];
         // dataStack = [group1, group2, ...]
         //
-        // DataRow {
+        // DataRowItem {
         //   type='group/data/nop',
         //   textContent='',
         //   variableName = 'a',
         //   from=0,
         //   to=100,
-        //   rows=[]
+        //   dataRowItems=[]
         // }
 
-        let rootDataRow = new DataRowItem(DataRowItemType.group);
-        dataRowStack.push(rootDataRow);
+        let rootDataRowItem = new DataRowItem(DataRowItemType.group);
+        dataRowItemStack.push(rootDataRowItem);
 
-        let currentGroup = rootDataRow;
-        let enterGroup = (groupDataRow) => {
-            currentGroup = groupDataRow;
-            dataRowStack.push(groupDataRow);
+        let currentGroup = rootDataRowItem;
+        let enterGroup = (groupDataRowItem) => {
+            currentGroup = groupDataRowItem;
+            dataRowItemStack.push(groupDataRowItem);
         };
 
         let leaveGroup = () => {
-            currentGroup = dataRowStack.pop();
+            currentGroup = dataRowItemStack.pop();
         };
 
-        let appendDataRow = (dataRow) => {
-            currentGroup.rows.push(dataRow);
+        let appendDataRowItem = (dataRowItem) => {
+            currentGroup.rows.push(dataRowItem);
         };
 
-        let lineTexts = textContent.split('\n').map(line => {return line.trim();});
+        let lineTexts = textContent.split('\n').map(line => {
+            return line.trim();
+        });
+
         let state = 'expect-fm-start-or-portlist'; // front-matter or port list
-        for(let lineText of lineTexts) {
+        for(let lineIdx = 0; lineIdx< lineTexts.length; lineIdx++) {
+            let lineText = lineTexts[lineIdx];
+
             if (lineText === '' ||
                 lineText.startsWith('#')) {
                 continue;
@@ -78,7 +83,7 @@ class TestScriptParser {
                         if (lineText === '---'){
                             state = 'expect-fm-end';
                         }else {
-                            portItems = PortListParser.parse(lineText);
+                            portItems = PortListParser.parse(lineIdx, lineText);
                         }
                         break;
                     }
@@ -88,7 +93,7 @@ class TestScriptParser {
                         if (lineText === '---') {
                             state = 'expect-portlist';
                         }else {
-                            let frontMatter = FrontMatterParser.parseLine(lineText);
+                            let frontMatter = FrontMatterParser.parseLine(lineIdx, lineText);
                             frontMatterItems.push(frontMatter);
                         }
                         break;
@@ -96,7 +101,7 @@ class TestScriptParser {
 
                 case 'expect-portlist':
                     {
-                        portItems = PortListParser.parse(lineText);
+                        portItems = PortListParser.parse(lineIdx, lineText);
                         state = 'expect-data-row';
                         break;
                     }
@@ -105,18 +110,18 @@ class TestScriptParser {
                     {
                         if (/^nop\s*\(/.test(lineText)) {
                             // parse 'nop'
-                            let nopDataRow = DataRowParser.parseNopRow(lineText);
-                            appendDataRow(nopDataRow);
+                            let nopDataRow = DataRowParser.parseNopRow(lineIdx, lineText);
+                            appendDataRowItem(nopDataRow);
 
                         }else if (/^repeat\s*\(/.test(lineText)) {
                             // parse 'repeat'
-                            let repeatDataRow = DataRowParser.parseRepeatRow(lineText);
-                            appendDataRow(repeatDataRow);
+                            let repeatDataRow = DataRowParser.parseRepeatRow(lineIdx, lineText);
+                            appendDataRowItem(repeatDataRow);
 
                         }else if (/^for\s*\(/.test(lineText)) {
                             // parse 'for'
-                            let loopDataRow = DataRowParser.parseLoopRow(lineText);
-                            appendDataRow(loopDataRow);
+                            let loopDataRow = DataRowParser.parseLoopRow(lineIdx, lineText);
+                            appendDataRowItem(loopDataRow);
                             enterGroup(loopDataRow);
 
                         }else if (/^end$/.test(lineText)){
@@ -125,8 +130,8 @@ class TestScriptParser {
 
                         }else {
                             // parse normal data row
-                            let dataRow = DataRowParser.parseDataRow(lineText);
-                            appendDataRow(dataRow);
+                            let dataRow = DataRowParser.parseDataRow(lineIdx, lineText);
+                            appendDataRowItem(dataRow);
                         }
 
                         break;
@@ -136,7 +141,7 @@ class TestScriptParser {
 
         let frontMatter = ObjectUtils.collapseKeyValueArray(frontMatterItems, 'key', 'value');
 
-        let scriptItem = new ScriptItem(scriptName, frontMatter, portItems, rootDataRow.rows);
+        let scriptItem = new ScriptItem(scriptName, frontMatter, portItems, rootDataRowItem.rows);
         return scriptItem;
     }
 }

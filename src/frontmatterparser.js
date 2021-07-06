@@ -22,36 +22,56 @@ class FrontMatterParser {
      *
      * 其中字符串的双引号在无歧义的情况下可以省略。
      *
+     * @param {*} lineIdx
      * @param {*} lineText 头信息文本的单一行内容
      * @returns
      */
-    static parseLine(lineText) {
+    static parseLine(lineIdx, lineText) {
         let pos = lineText.indexOf(':');
         if (pos <= 0) {
-            throw new ParseException('Can not parse Front-Matter: ' + lineText);
+            throw new ParseException(
+                'Front-Matter syntax error, at line: ' + (lineIdx + 1));
         }
 
         let key = lineText.substring(0, pos).trim(); // 去除头尾空格
         let value;
 
-        let valueString = lineText.substring(pos + 1);
-        let numberValue = Number(valueString);
-        if (!isNaN(numberValue)) {
-            // 数字类型的值
-            value = numberValue;
+        let valueString = lineText.substring(pos + 1).trim(); // 去除头尾空格
 
-        } else if (/^true|false$/i.test(valueString)) {
-            // Boolean 类型
-            value = (valueString.toUpperCase() === 'TRUE');
+        if (valueString.startsWith('"')) {
+            // 有双引号包围的字符类型的值
 
-        } else {
-            // 字符类型的值
-            value = valueString.trim();  // 去除头尾空格
-            if (value.startsWith('"')) {
-                value = value.substring(1);
+            // 寻找双引号结束的位置
+            let quotePos = valueString.indexOf('"', 1);
+            if (quotePos < 0) {
+                throw new ParseException(
+                    'The ending quote was not found in the value of the Front-Matter field, at line: ' + (lineIdx + 1));
             }
-            if (value.endsWith('"')) {
-                value = value.substring(0, value.length - 1);
+
+            value = valueString.substring(1, quotePos);
+
+        }else {
+            // 寻找注释符号的位置
+            let pos = valueString.indexOf('#');
+            if (pos > 0) {
+                valueString = valueString.substring(0, pos);
+                valueString = valueString.trim(); // 去除尾部空格
+            }
+
+            // 尝试转换为数字（注意数字间可能有分段符号 “_”）
+            let numberValue = Number(valueString.replace(/_/g, ''));
+
+            if (!isNaN(numberValue)) {
+                // 数字类型的值
+                value = numberValue;
+
+            } else if (/^true|false$/i.test(valueString)) {
+                // Boolean 类型
+                value = (valueString.toUpperCase() === 'TRUE');
+
+            } else {
+                // 字符类型的值
+                value = valueString;
             }
         }
 

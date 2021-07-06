@@ -33,27 +33,28 @@ class PortListParser {
      *
      * - 也可以一次选择多个不连续的范围，在中括号里使用逗号分隔多个范围即可，比如：
      *   Q[24, 22, 7:0]， A[5,3,1]
-     *   中括号里的数据位必须是 “高位到低位” 的顺序排序。
+     *   范围值允许有重叠，多个范围值的顺序可随意。
      *
      * - 可以把多个端口的数据拼接成一个端口，使用一对花括号（{ 和 }）把多个端口名称包围
      *   起来，然后端口名称之间使用逗号分隔，比如：
      *   {A, B}，{A3, A2, A1, A0}
      *
-     * - 不支持嵌套拼接，比如：
-     *   {A, {C, D}} **不支持**
-     *
      * - 拼接里面允许包含部分选取，比如：
      *   {A, B[7:0], Cin[5,3]}
+     *
+     * - 不支持嵌套拼接，比如：
+     *   {A, {C, D}} **不支持**
      *
      * - 不支持拼接后再部分选取，比如：
      *   {A, B}[14:12] **不支持**
      *
      * - 如果端口列表语法有误，会抛出 ParseException 异常。
      *
+     * @param {*} lineIdx
      * @param {*} lineText
      * @returns
      */
-    static parse(lineText) {
+    static parse(lineIdx, lineText) {
 
         // 先将端口文本的按空格分割成端口列表，
         // 因为端口名称允许“拼接”和“部分选取”，其中也可能会存在空格，
@@ -77,6 +78,9 @@ class PortListParser {
                             state = 'expect-curly-bracket-end';
                         }else if(c==='"') {
                             state = 'expect-double-quote-end';
+                        }else if (c==='#') {
+                            idx = lineText.length;
+                            break; // 遇到注释字符，需要退出 for 循环
                         }else{
                             portTextBuffer.push(c);
                             state = 'expect-port-end';
@@ -97,6 +101,9 @@ class PortListParser {
                             portTexts.push(name);
                             portTextBuffer = [];
                             state = 'expect-port-start';
+                        }else if (c==='#') {
+                            idx = lineText.length;
+                            break; // 遇到注释字符，需要退出 for 循环
                         }else {
                             portTextBuffer.push(c);
                         }
@@ -110,7 +117,7 @@ class PortListParser {
                             let name = portTextBuffer.join('');
                             portTexts.push(name);
                             portTextBuffer = [];
-                            state = 'expect-port-start';
+                            state = 'expect-space';
                         }else {
                             portTextBuffer.push(c);
                         }
@@ -124,9 +131,20 @@ class PortListParser {
                             let name = portTextBuffer.join('');
                             portTexts.push(name);
                             portTextBuffer = [];
-                            state = 'expect-port-start';
+                            state = 'expect-space';
                         }else {
                             portTextBuffer.push(c);
+                        }
+                        break;
+                    }
+
+                case 'expect-space':
+                    {
+                        if (c === ' ') {
+                            state = 'expect-port-start';
+                        }else {
+                            throw new ParseException('Expect space between port names, at line: ' + (lineIdx+1) +
+                                ', position: ' + (idx + 1));
                         }
                         break;
                     }
@@ -155,8 +173,13 @@ class PortListParser {
                             portTexts.push(name);
                             portTextBuffer = [];
                             state = 'expect-port-start';
+                        }else if (c==='#') {
+                            idx = lineText.length;
+                            break; // 遇到注释字符，需要退出 for 循环
                         }else {
-                            throw new ParseException('Expect port name start at position: ' + idx);
+                            throw new ParseException(
+                                'Expect port name start, at line: ' + (lineIdx + 1) +
+                                ', position: ' + (idx + 1));
                         }
                         break;
                     }
@@ -182,7 +205,8 @@ class PortListParser {
             state === 'expect-next-port-or-sub-port-start-or-square-bracket-start'){
             //
         }else {
-            throw new ParseException('Invalid port list: ' + lineText);
+            throw new ParseException(
+                'Port list syntax error, at line: ' + (lineIdx + 1));
         }
 
         let portItems = portTexts.map(portText => {
@@ -192,7 +216,8 @@ class PortListParser {
         // 检查端口语法
         for(let portItem of portItems) {
             if (!portItem.isValid()) {
-                throw new ParseException('Port list syntax error: ' + portItem.getTitle());
+                throw new ParseException(
+                    'Port name syntax error, text: "' + portItem.getTitle() + '"');
             }
         }
 
@@ -306,7 +331,8 @@ class PortListParser {
                             portTextBuffer = [];
                             state = 'expect-port-start';
                         }else {
-                            throw new ParseException('Expect port name start at position: ' + idx);
+                            throw new ParseException(
+                                'Port name syntax error, text: "' + portText + '", at position: ' + (idx+1));
                         }
                         break;
                     }
@@ -333,7 +359,7 @@ class PortListParser {
             state === 'expect-comma-or-sub-port-start-or-square-bracket-start'){
             //
         }else {
-            throw new ParseException('Invalid port list: ' + portText);
+            throw new ParseException('Port name syntax error, text: "' + portText + '"');
         }
 
         // 花括号里提取出来的端口名称可能包含有前后空格

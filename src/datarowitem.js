@@ -1,18 +1,18 @@
 const DataRowItemType = require('./datarowitemtype');
 
 class DataRowItem {
-    constructor(type = DataRowItemType.data,
-        textContent = '',
+    constructor(type = DataRowItemType.data, // data/group/nop
+        dataCellItems = [],
         variableName,
         from=0,
         to=0,
-        rows=[]) {
+        dataRowItems=[]) {
         this.type = type;
-        this.textContent = textContent;
-        this.variableName = variableName;
-        this.from = from;
-        this.to = to;
-        this.rows = rows;
+        this.dataCellItems = dataCellItems;
+        this.variableName = variableName; // string [a-z][a-z0-9_]*
+        this.from = from; // number
+        this.to = to; // number
+        this.dataRowItems = dataRowItems; // child data row items
     }
 }
 
