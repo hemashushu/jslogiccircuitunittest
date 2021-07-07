@@ -1,9 +1,20 @@
 const { ParseException } = require('jsexception');
 
 const DataRowItem = require('./datarowitem');
+const DataRowItemType = require('./datarowitemtype');
+const DataCellItem = require('./datacellitem');
+const DataCellItemType = require('./datacellitemtype');
 
 class DataRowParser {
 
+    /**
+     * 解析数据行
+     *
+     * @param {*} lineIdx
+     * @param {*} rowText
+     * @returns DataRowItem 对象，如果数据行有语法错误，则
+     *     抛出 ParseException 异常。
+     */
     static parseDataRow(lineIdx, rowText) {
         // 数据行有可能几种数据：
         // 1. 普通数字，包括十进制（默认）、二进制、十六进制，有可能分段；
@@ -13,6 +24,11 @@ class DataRowParser {
 
         let cells = [];
         let cellBuffer = [];
+
+        // 记录当前括号的嵌套层数。
+        // 因为函数支持括号嵌套，所以需要一个变量记录当前的层数，以判断正确的
+        // 结束括号。
+        let bracketDeepth = 0;
 
         let state = 'expect-cell-start';
         for(let idx=0; idx<rowText.length; idx++) {
@@ -24,6 +40,7 @@ class DataRowParser {
                             continue;
                         }else if (c==='(') {
                             cellBuffer.push(c);
+                            bracketDeepth = 0; // 重置嵌套计数器
                             state = 'expect-bracket-end';
                         }else if (c==='"') {
                             cellBuffer.push(c);
@@ -56,12 +73,21 @@ class DataRowParser {
 
                 case 'expect-bracket-end':
                     {
-                        if(c===')') {
+                        if (c === '(') {
                             cellBuffer.push(c);
-                            let cell = cellBuffer.join('');
-                            cells.push(cell);
-                            cellBuffer = [];
-                            state = 'expect-space';
+                            bracketDeepth++; // 嵌套括号开始
+                        }else if(c===')') {
+                            if (bracketDeepth === 0) {
+                                cellBuffer.push(c);
+                                let cell = cellBuffer.join('');
+                                cells.push(cell);
+                                cellBuffer = [];
+                                state = 'expect-space';
+                            }else {
+                                bracketDeepth--; // 嵌套括号结束
+                                cellBuffer.push(c);
+                            }
+
                         }else {
                             cellBuffer.push(c);
                         }
@@ -108,43 +134,147 @@ class DataRowParser {
                 'Data row syntax error, at line: ' + (lineIdx + 1));
         }
 
-        console.log('>>>>>>>>>>>>');
-        console.log(cells);
+        let dataCellItems = [];
+        for(let cell of cells) {
+            let dataCellItem = DataRowParser.convertToDataCellItem(lineIdx, cell);
+            dataCellItems.push(dataCellItem);
+        }
 
-        return new DataRowItem();
+        return new DataRowItem(DataRowItemType.data, lineIdx, dataCellItems);
+    }
+
+    /**
+     * 如果单元格数据格式有错误，会抛出 ParseException 异常。
+     * 注意算术表达式需要在测试过程中才检查是否有语法有误。
+     *
+     * @param {*} lineIdx
+     * @param {*} cellText
+     * @returns
+     */
+    static convertToDataCellItem(lineIdx, cellText) {
+        if (cellText.startsWith('"')) {
+            // 字符串
+            let cellTextContent = cellText.substring(1, cellText.length - 1);
+            return DataRowParser.convertToBytesDataCellItem(cellTextContent);
+        }else if (cellText.startsWith('(')) {
+            // 算术表达式
+            let cellTextContent = cellText.substring(1, cellText.length - 1);
+            return DataRowParser.convertToArithmeticDataCellItem(cellTextContent);
+        }else if (cellText === '*') {
+            // 忽略值
+            return DataRowParser.convertToIgnoreDataCellItem();
+        }else if (/^[a-z][a-z0-9_]*$/.test(cellText)) {
+            // 变量值
+            return DataRowParser.convertToArithmeticDataCellItem(cellText);
+        }else {
+            return DataRowParser.convertToNumberDataCellItem(lineIdx, cellText);
+        }
+    }
+
+    /**
+     * 如果数字格式错误，会抛出 ParseException 异常。
+     *
+     * @param {*} lineIdx
+     * @param {*} cellTextContent
+     * @returns
+     */
+    static convertToNumberDataCellItem(lineIdx, cellTextContent) {
+        let number = Number(cellTextContent);
+        if (isNaN(number)) {
+            throw new ParseException('Can not convert to number, text: "' + cellTextContent + '"' +
+                ', at line: ' + (lineIdx + 1));
+        }
+        return new DataCellItem(DataCellItemType.number, number);
+    }
+
+    static convertToBytesDataCellItem(cellTextContent) {
+        // Buffer instances are also JavaScript Uint8Array and TypedArray instances
+        // https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarrays
+        //
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
+        let buffer = Buffer.from(cellTextContent, 'utf8');
+        let uint8Array = Uint8Array.from(buffer);
+        return new DataCellItem(DataCellItemType.bytes, uint8Array);
+    }
+
+    static convertToArithmeticDataCellItem(cellTextContent) {
+        return new DataCellItem(DataCellItemType.arithmetic, cellTextContent);
+    }
+
+    static convertToIgnoreDataCellItem() {
+        return new DataCellItem(DataCellItemType.ignore);
     }
 
     static parseRepeatRow(lineIdx, rowText) {
-        // 寻找注释符号
-        let pos = rowText.indexOf('#');
-        if (pos > 0) {
-            rowText = rowText.substring(0, pos);
-            rowText = rowText.trim();
+        // repeat 语句示例：
+        //
+        // repeat(256, i)  i  2  (i*2)
+        // repeat 关键字后面括号里面分别是重复次数和变量名称，变量名称可省略。
+        // 后面则是普通的数据行内容。
+        //
+        // 匹配的正则表达式为：
+        // ^\s*repeat\s*\(
+        // \s*(\d+)\s*
+        // (,\s*([a-z][a-z0-9_]*)\s*)?
+        // \)\s+(.+)$
+
+        let match = /^\s*repeat\s*\(\s*(\d+)\s*(,\s*([a-z][a-z0-9_]*)\s*)?\)\s+(.+)$/.exec(rowText);
+        if (match === null) {
+            throw new ParseException(
+                'Data row syntax error, statement: "repeat", at line: ' + (lineIdx + 1));
         }
 
-        return new DataRowItem();
+        let repeatCount = Number(match[1]);
+        let variableName = match[3]; // 可能为 undefined
+        if (variableName !== undefined) {
+            variableName = variableName.trim();
+        }
+        let subDataRowText = match[4];
+
+        let subDataRowItem = DataRowParser.parseDataRow(lineIdx, subDataRowText);
+
+        return new DataRowItem(DataRowItemType.group, lineIdx, undefined,
+            variableName, 0, repeatCount - 1, [subDataRowItem]);
     }
 
-    static parseLoopRow(lineIdx, rowText) {
+    static parseForRow(lineIdx, rowText) {
         // 寻找注释符号
         let pos = rowText.indexOf('#');
         if (pos > 0) {
             rowText = rowText.substring(0, pos);
-            rowText = rowText.trim();
         }
 
-        return new DataRowItem();
+        rowText = rowText.trim(); // 去头去尾
+
+        // for 语句示例：
+        //
+        // for(i, 0, 256)
+        //
+        // 匹配的正则表达式为：
+        // ^for\s*\(
+        // \s*([a-z][a-z0-9_]*)\s*
+        // ,
+        // \s*(\d+)\s*
+        // ,
+        // \s*(\d+)\s*
+        // \)$
+
+        let match = /^for\s*\(\s*([a-z][a-z0-9_]*)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/.exec(rowText);
+        if (match === null) {
+            throw new ParseException(
+                'Data row syntax error, statement: "for", at line: ' + (lineIdx + 1));
+        }
+
+        let variableName = match[1].trim();
+        let from = Number(match[2]);
+        let to = Number(match[3]);
+
+        return new DataRowItem(DataRowItemType.group, lineIdx, undefined,
+            variableName, from, to);
     }
 
-    static parseNopRow(lineIdx, towText) {
-        // 寻找注释符号
-        let pos = rowText.indexOf('#');
-        if (pos > 0) {
-            rowText = rowText.substring(0, pos);
-            rowText = rowText.trim();
-        }
-
-        return new DataRowItem();
+    static parseNopRow(lineIdx) {
+        return new DataRowItem(DataRowItemType.nop, lineIdx);
     }
 }
 

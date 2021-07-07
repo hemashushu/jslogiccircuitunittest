@@ -3,6 +3,8 @@ const path = require('path');
 const { PromiseTextFile } = require('jstextfile');
 const {ObjectUtils} = require('jsobjectutils');
 
+const { ParseException } = require('jsexception');
+
 const DataRowParser = require('./datarowparser');
 const DataRowItem = require('./datarowitem');
 const DataRowItemType = require('./datarowitemtype');
@@ -48,21 +50,28 @@ class TestScriptParser {
         // }
 
         let rootDataRowItem = new DataRowItem(DataRowItemType.group);
-        dataRowItemStack.push(rootDataRowItem);
+        let currentGroup;
 
-        let currentGroup = rootDataRowItem;
         let enterGroup = (groupDataRowItem) => {
             currentGroup = groupDataRowItem;
             dataRowItemStack.push(groupDataRowItem);
         };
 
-        let leaveGroup = () => {
-            currentGroup = dataRowItemStack.pop();
+        let leaveGroup = (lineIdx) => {
+            if (dataRowItemStack.length <= 1) {
+                throw new ParseException(
+                    'Exceeded "for" statement, at line: ' + (lineIdx + 1));
+            }
+            dataRowItemStack.pop();
+            currentGroup = dataRowItemStack[dataRowItemStack.length - 1];
         };
 
         let appendDataRowItem = (dataRowItem) => {
-            currentGroup.rows.push(dataRowItem);
+            currentGroup.dataRowItems.push(dataRowItem);
         };
+
+        // push the root group into stack
+        enterGroup(rootDataRowItem);
 
         let lineTexts = textContent.split('\n').map(line => {
             return line.trim();
@@ -84,6 +93,7 @@ class TestScriptParser {
                             state = 'expect-fm-end';
                         }else {
                             portItems = PortListParser.parse(lineIdx, lineText);
+                            state = 'expect-data-row';
                         }
                         break;
                     }
@@ -108,25 +118,25 @@ class TestScriptParser {
 
                 case 'expect-data-row':
                     {
-                        if (/^nop\s*\(/.test(lineText)) {
+                        if (/^\s*nop(\s*$|\s*#.*$)/.test(lineText)) {
                             // parse 'nop'
                             let nopDataRow = DataRowParser.parseNopRow(lineIdx, lineText);
                             appendDataRowItem(nopDataRow);
 
-                        }else if (/^repeat\s*\(/.test(lineText)) {
+                        }else if (/^\s*repeat\s*\(/.test(lineText)) {
                             // parse 'repeat'
                             let repeatDataRow = DataRowParser.parseRepeatRow(lineIdx, lineText);
                             appendDataRowItem(repeatDataRow);
 
-                        }else if (/^for\s*\(/.test(lineText)) {
+                        }else if (/^\s*for\s*\(/.test(lineText)) {
                             // parse 'for'
-                            let loopDataRow = DataRowParser.parseLoopRow(lineIdx, lineText);
-                            appendDataRowItem(loopDataRow);
-                            enterGroup(loopDataRow);
+                            let forDataRow = DataRowParser.parseForRow(lineIdx, lineText);
+                            appendDataRowItem(forDataRow);
+                            enterGroup(forDataRow);
 
-                        }else if (/^end$/.test(lineText)){
+                        }else if (/^\s*end(\s*$|\s*#.*$)/.test(lineText)){
                             // 跳出当前组
-                            leaveGroup();
+                            leaveGroup(lineIdx);
 
                         }else {
                             // parse normal data row
@@ -141,7 +151,7 @@ class TestScriptParser {
 
         let frontMatter = ObjectUtils.collapseKeyValueArray(frontMatterItems, 'key', 'value');
 
-        let scriptItem = new ScriptItem(scriptName, frontMatter, portItems, rootDataRowItem.rows);
+        let scriptItem = new ScriptItem(scriptName, frontMatter, portItems, rootDataRowItem.dataRowItems);
         return scriptItem;
     }
 }

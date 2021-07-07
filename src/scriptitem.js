@@ -1,9 +1,9 @@
 class ScriptItem {
-    constructor(name, frontMatter = {}, portItems = [], dataRows = []) {
+    constructor(name, frontMatter = {}, portItems = [], dataRowItems = []) {
         this.name = name;
         this.frontMatter = frontMatter;
         this.portItems = portItems;
-        this.dataRows = dataRows;
+        this.dataRowItems = dataRowItems;
     }
 }
 

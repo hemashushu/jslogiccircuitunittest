@@ -43,18 +43,72 @@ describe('Parse script file test', () => {
     describe('Test DataRowParser',()=>{
         it('Test parseDataRow()',() => {
             let dataRowItem1 =  DataRowParser.parseDataRow(0, '0 1 0 1 0b1100 0xff00');
+            let dataRowItem2 = DataRowParser.parseDataRow(0, '"a" "foo" (1+2) (3+a) "bar"');
+            let dataRowItem3 = DataRowParser.parseDataRow(0, '1 0 * "*"');
+            let dataRowItem4 = DataRowParser.parseDataRow(0, '(log2(100)+1) 0b0011 (a + 0xaacc + abs(b)) 1');
+        });
 
+        it('Test "nop" statement', ()=>{
+            let textContent =
+                'A B Q\n' +
+                '0 0 0\n' +
+                'nop\n' +
+                'nop # rem1\n' +
+                '1 1 1';
+
+            let scriptItem = ScriptParser.parse('test', textContent);
+            // console.log(scriptItem);
+        });
+
+        it('Test "repeat" statement', ()=>{
+            let textContent =
+                'A B Q\n' +
+                '0 0 0\n' +
+                'repeat(10, i) 1 i (1+i)\n' +
+                '0 0 0\n' +
+                'repeat(5) nop\n' +
+                ' 1 1 1';
+
+            let scriptItem = ScriptParser.parse('test', textContent);
+            // console.log(scriptItem);
+        });
+
+        it('Test "for" statement', ()=>{
+            let textContent =
+                'A B Q\n' +
+                '0 0 0\n' +
+                'for(i, 0, 10)\n' +
+                '  0 i 0\n' +
+                '  (~i) i 0\n' +
+                'end\n' +
+                ' 1 1 1';
+
+            let scriptItem = ScriptParser.parse('test', textContent);
+            // console.log(scriptItem);
+        });
+
+        it('Test cascading "for" statement', ()=>{
+            let textContent =
+                'A B Q\n' +
+                'for(i, 0, 10)\n' +
+                '  i 0 0\n' +
+                '  for(j, 15, 20)\n' +
+                '    i j (i+j)\n' +
+                '  end\n' +
+                '  1 1 1\n' +
+                'end\n';
+
+            let scriptItem = ScriptParser.parse('test', textContent);
+            // console.log(JSON.stringify(scriptItem, undefined, '  '));
         });
     });
 
     it('Test parseFile', async ()=>{
-//         let testDirectory = __dirname;
-//         let resourcesDirectory = path.join(testDirectory, 'resources');
-//         let scriptFile1 = path.join(resourcesDirectory, 'sample_test_script_1.txt');
-//
-//         let scriptItem = await ScriptParser.parseFile(scriptFile1);
-//         console.log(scriptItem.frontMatter);
-//         console.log(scriptItem.portItems);
-//         console.log(scriptItem.dataRows);
+        let testDirectory = __dirname;
+        let resourcesDirectory = path.join(testDirectory, 'resources');
+        let scriptFile1 = path.join(resourcesDirectory, 'sample_test_script_1.txt');
+
+        let scriptItem = await ScriptParser.parseFile(scriptFile1);
+        // console.log(scriptItem);
     });
 });
