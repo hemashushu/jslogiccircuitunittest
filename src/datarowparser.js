@@ -7,6 +7,46 @@ const DataCellItemType = require('./datacellitemtype');
 
 class DataRowParser {
 
+    static parseLine(lineIdx, lineText) {
+        if (/^\s*nop(\s*$|\s*#.*$)/.test(lineText)) {
+            // parse 'nop'
+            let nopDataRowItem = DataRowParser.parseNopRow(lineIdx, lineText);
+            // appendDataRowItem(nopDataRow);
+            return {dataRowItem: nopDataRowItem};
+
+        }else if (/^\s*repeat\s*\(/.test(lineText)) {
+            // parse 'repeat'
+            let repeatDataRowItem = DataRowParser.parseRepeatRow(lineIdx, lineText);
+            // appendDataRowItem(repeatDataRow);
+            return {dataRowItem: repeatDataRowItem};
+
+        }else if (/^\s*for\s*\(/.test(lineText)) {
+            // parse 'for'
+            let forDataRowItem = DataRowParser.parseForRow(lineIdx, lineText);
+            // appendDataRowItem(forDataRow);
+            // enterGroup(forDataRow);
+            return {
+                dataRowItem: forDataRowItem,
+                isEnterGroup: true
+            };
+
+        }else if (/^\s*end(\s*$|\s*#.*$)/.test(lineText)){
+            // 跳出当前组
+            // leaveGroup(lineIdx);
+            return {
+                isLeaveGroup: true
+            };
+
+        }else {
+            // parse normal data row
+            let dataRowItem = DataRowParser.parseDataRow(lineIdx, lineText);
+            // appendDataRowItem(dataRow);
+            return {
+                dataRowItem: dataRowItem
+            };
+        }
+    }
+
     /**
      * 解析数据行
      *
@@ -188,12 +228,7 @@ class DataRowParser {
     }
 
     static convertToBytesDataCellItem(cellTextContent) {
-        // Buffer instances are also JavaScript Uint8Array and TypedArray instances
-        // https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarrays
-        //
-        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
-        let buffer = Buffer.from(cellTextContent, 'utf8');
-        let uint8Array = Uint8Array.from(buffer);
+        let uint8Array = DataCellItem.stringToUInt8Array(cellTextContent);
         return new DataCellItem(DataCellItemType.bytes, uint8Array);
     }
 
@@ -231,7 +266,16 @@ class DataRowParser {
         }
         let subDataRowText = match[4];
 
-        let subDataRowItem = DataRowParser.parseDataRow(lineIdx, subDataRowText);
+        let {
+            dataRowItem: subDataRowItem,
+            isEnterGroup,
+            isLeaveGroup
+        } = DataRowParser.parseLine(lineIdx, subDataRowText);
+
+        if (isEnterGroup || isLeaveGroup) {
+            throw new ParseException(
+                'Data row syntax error, statement: "repeat", at line: ' + (lineIdx + 1));
+        }
 
         return new DataRowItem(DataRowItemType.group, lineIdx, undefined,
             variableName, 0, repeatCount - 1, [subDataRowItem]);

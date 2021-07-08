@@ -11,6 +11,16 @@ class DataCellItem {
         // - ignore: data 为 undefined。
         this.data = data;
     }
+
+    static stringToUInt8Array(text) {
+        // Buffer instances are also JavaScript Uint8Array and TypedArray instances
+        // https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarrays
+        //
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
+        let buffer = Buffer.from(text, 'utf8');
+        let uint8Array = Uint8Array.from(buffer);
+        return uint8Array;
+    }
 }
 
 module.exports = DataCellItem;

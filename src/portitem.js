@@ -21,8 +21,12 @@ class PortItem extends AbstractPortItem{
 
 class SlicePortItem extends AbstractPortItem {
     constructor(namePath, bitRanges) {
-        // ranges: [{bitHigh, bitLow}, ...]
         super(namePath);
+
+        // - ranges: [{bitHigh, bitLow}, ...] 数组
+        // - ranges 的顺序跟脚本书写的顺序一致，即先写
+        //   的范围先加入数组（索引值较小），后写的后加入
+        //   数组（索引值较大）。
         this.bitRanges = bitRanges;
     }
 
@@ -53,28 +57,24 @@ class SlicePortItem extends AbstractPortItem {
             }
         }
 
-        // // bitRanges 数组中的元素是 “从高位到低位” 的顺序排序。
-        // for(let idx=this.bitRanges.length - 1; idx>0; idx--) {
-        //     let highBitRange = this.bitRanges[idx];
-        //     let lowBitRange = this.bitRanges[idx - 1];
-        //     if (highBitRange.bitLow < lowBitRange.bitHigh) {
-        //         return false;
-        //     }
-        // }
-
         return true;
     }
 }
 
 class CombinedPortItem extends AbstractPortItem {
-    constructor(abstractPortItems) {
-        super('');
-        this.portItems = abstractPortItems;
+    constructor(childPortItems) {
+        super(''); // 组合端口没有名称（但有标题）
+
+        // - childPortItems: [AbstractPortItem, ...] 数组
+        // - childPortItems 的顺序跟脚本书写的顺序一致，即先写
+        //   的范围先加入数组（索引值较小），后写的后加入
+        //   数组（索引值较大）。
+        this.childPortItems = childPortItems;
     }
 
     getTitle() {
         let childPortTitles = [];
-        for(let portItem of this.portItems) {
+        for(let portItem of this.childPortItems) {
             childPortTitles.push(portItem.getTitle());
         }
         let childPortString = childPortTitles.join(', ');
@@ -82,7 +82,7 @@ class CombinedPortItem extends AbstractPortItem {
     }
 
     isValid() {
-        for(let portItem of this.portItems) {
+        for(let portItem of this.childPortItems) {
             if (!portItem.isValid()) {
                 return false;
             }

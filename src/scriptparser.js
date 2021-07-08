@@ -118,32 +118,20 @@ class TestScriptParser {
 
                 case 'expect-data-row':
                     {
-                        if (/^\s*nop(\s*$|\s*#.*$)/.test(lineText)) {
-                            // parse 'nop'
-                            let nopDataRow = DataRowParser.parseNopRow(lineIdx, lineText);
-                            appendDataRowItem(nopDataRow);
+                        let {
+                            dataRowItem,
+                            isEnterGroup,
+                            isLeaveGroup
+                        } = DataRowParser.parseLine(lineIdx, lineText);
 
-                        }else if (/^\s*repeat\s*\(/.test(lineText)) {
-                            // parse 'repeat'
-                            let repeatDataRow = DataRowParser.parseRepeatRow(lineIdx, lineText);
-                            appendDataRowItem(repeatDataRow);
-
-                        }else if (/^\s*for\s*\(/.test(lineText)) {
-                            // parse 'for'
-                            let forDataRow = DataRowParser.parseForRow(lineIdx, lineText);
-                            appendDataRowItem(forDataRow);
-                            enterGroup(forDataRow);
-
-                        }else if (/^\s*end(\s*$|\s*#.*$)/.test(lineText)){
-                            // 跳出当前组
+                        if (isLeaveGroup === true) {
                             leaveGroup(lineIdx);
-
+                        }else if(isEnterGroup) {
+                            appendDataRowItem(dataRowItem);
+                            enterGroup(dataRowItem);
                         }else {
-                            // parse normal data row
-                            let dataRow = DataRowParser.parseDataRow(lineIdx, lineText);
-                            appendDataRowItem(dataRow);
+                            appendDataRowItem(dataRowItem);
                         }
-
                         break;
                     }
             }

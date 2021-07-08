@@ -24,7 +24,8 @@ class FrontMatterParser {
      *
      * @param {*} lineIdx
      * @param {*} lineText 头信息文本的单一行内容
-     * @returns
+     * @returns {key:..., value:...} 对象。如果有语法错误，如
+     *     缺少冒号，双引号不成双等，则抛出 ParseException 异常。
      */
     static parseLine(lineIdx, lineText) {
         let pos = lineText.indexOf(':');

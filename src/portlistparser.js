@@ -138,10 +138,13 @@ class PortListParser {
                         break;
                     }
 
-                case 'expect-space':
+                case 'expect-space': // 遇到中括号或者花括号结束
                     {
                         if (c === ' ') {
                             state = 'expect-port-start';
+                        }else if (c==='#') {
+                            idx = lineText.length;
+                            break; // 遇到注释字符，需要退出 for 循环
                         }else {
                             throw new ParseException('Expect space between port names, at line: ' + (lineIdx+1) +
                                 ', position: ' + (idx + 1));
@@ -202,6 +205,7 @@ class PortListParser {
             portTexts.push(name);
         }else if(
             state === 'expect-port-start' ||
+            state === 'expect-space' ||
             state === 'expect-next-port-or-sub-port-start-or-square-bracket-start'){
             //
         }else {
