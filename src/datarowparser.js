@@ -180,64 +180,8 @@ class DataRowParser {
             dataCellItems.push(dataCellItem);
         }
 
+        // 生成一个数据 DataRowItem 对象。
         return new DataRowItem(DataRowItemType.data, lineIdx, dataCellItems);
-    }
-
-    /**
-     * 如果单元格数据格式有错误，会抛出 ParseException 异常。
-     * 注意算术表达式需要在测试过程中才检查是否有语法有误。
-     *
-     * @param {*} lineIdx
-     * @param {*} cellText
-     * @returns
-     */
-    static convertToDataCellItem(lineIdx, cellText) {
-        if (cellText.startsWith('"')) {
-            // 字符串
-            let cellTextContent = cellText.substring(1, cellText.length - 1);
-            return DataRowParser.convertToBytesDataCellItem(cellTextContent);
-        }else if (cellText.startsWith('(')) {
-            // 算术表达式
-            let cellTextContent = cellText.substring(1, cellText.length - 1);
-            return DataRowParser.convertToArithmeticDataCellItem(cellTextContent);
-        }else if (cellText === '*') {
-            // 忽略值
-            return DataRowParser.convertToIgnoreDataCellItem();
-        }else if (/^[a-z][a-z0-9_]*$/.test(cellText)) {
-            // 变量值
-            return DataRowParser.convertToArithmeticDataCellItem(cellText);
-        }else {
-            return DataRowParser.convertToNumberDataCellItem(lineIdx, cellText);
-        }
-    }
-
-    /**
-     * 如果数字格式错误，会抛出 ParseException 异常。
-     *
-     * @param {*} lineIdx
-     * @param {*} cellTextContent
-     * @returns
-     */
-    static convertToNumberDataCellItem(lineIdx, cellTextContent) {
-        let number = Number(cellTextContent);
-        if (isNaN(number)) {
-            throw new ParseException('Can not convert to number, text: "' + cellTextContent + '"' +
-                ', at line: ' + (lineIdx + 1));
-        }
-        return new DataCellItem(DataCellItemType.number, number);
-    }
-
-    static convertToBytesDataCellItem(cellTextContent) {
-        let uint8Array = DataCellItem.stringToUInt8Array(cellTextContent);
-        return new DataCellItem(DataCellItemType.bytes, uint8Array);
-    }
-
-    static convertToArithmeticDataCellItem(cellTextContent) {
-        return new DataCellItem(DataCellItemType.arithmetic, cellTextContent);
-    }
-
-    static convertToIgnoreDataCellItem() {
-        return new DataCellItem(DataCellItemType.ignore);
     }
 
     static parseRepeatRow(lineIdx, rowText) {
@@ -277,6 +221,8 @@ class DataRowParser {
                 'Data row syntax error, statement: "repeat", at line: ' + (lineIdx + 1));
         }
 
+        // 生成一个 childDataRowItems 属性值为单一条 DataRowItem 的
+        // DataRowItem 对象。
         return new DataRowItem(DataRowItemType.group, lineIdx, undefined,
             variableName, 0, repeatCount - 1, [subDataRowItem]);
     }
@@ -313,12 +259,70 @@ class DataRowParser {
         let from = Number(match[2]);
         let to = Number(match[3]);
 
+        // 生成一个 childDataRowItems 属性值为空数组的 DataRowItem 对象，返回
+        // 主脚本解析程序会填充 childDataRowItems。
         return new DataRowItem(DataRowItemType.group, lineIdx, undefined,
             variableName, from, to);
     }
 
     static parseNopRow(lineIdx) {
-        return new DataRowItem(DataRowItemType.nop, lineIdx);
+        return new DataRowItem(DataRowItemType.nop, lineIdx, undefined);
+    }
+
+    /**
+     * 如果单元格数据格式有错误，会抛出 ParseException 异常。
+     * 注意算术表达式需要在测试过程中才检查是否有语法有误。
+     *
+     * @param {*} lineIdx
+     * @param {*} cellText
+     * @returns
+     */
+    static convertToDataCellItem(lineIdx, cellText) {
+        if (cellText.startsWith('"')) {
+            // 字符串
+            let cellTextContent = cellText.substring(1, cellText.length - 1);
+            return DataRowParser.convertToStringDataCellItem(cellTextContent);
+        }else if (cellText.startsWith('(')) {
+            // 算术表达式
+            let cellTextContent = cellText.substring(1, cellText.length - 1);
+            return DataRowParser.convertToArithmeticDataCellItem(cellTextContent);
+        }else if (cellText === '*') {
+            // 忽略值
+            return DataRowParser.convertToIgnoreDataCellItem();
+        }else if (/^[a-z][a-z0-9_]*$/.test(cellText)) {
+            // 变量值
+            return DataRowParser.convertToArithmeticDataCellItem(cellText);
+        }else {
+            return DataRowParser.convertToNumberDataCellItem(lineIdx, cellText);
+        }
+    }
+
+    /**
+     * 如果数字格式错误，会抛出 ParseException 异常。
+     *
+     * @param {*} lineIdx
+     * @param {*} cellTextContent
+     * @returns
+     */
+    static convertToNumberDataCellItem(lineIdx, cellTextContent) {
+        let number = Number(cellTextContent);
+        if (isNaN(number)) {
+            throw new ParseException('Can not convert to number, text: "' + cellTextContent + '"' +
+                ', at line: ' + (lineIdx + 1));
+        }
+        return new DataCellItem(DataCellItemType.number, number);
+    }
+
+    static convertToStringDataCellItem(cellTextContent) {
+        return new DataCellItem(DataCellItemType.string, cellTextContent);
+    }
+
+    static convertToArithmeticDataCellItem(cellTextContent) {
+        return new DataCellItem(DataCellItemType.arithmetic, cellTextContent);
+    }
+
+    static convertToIgnoreDataCellItem() {
+        return new DataCellItem(DataCellItemType.ignore);
     }
 }
 

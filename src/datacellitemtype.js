@@ -1,6 +1,6 @@
 const DataCellItemType = {
     number: 'number',
-    bytes: 'bytes',
+    string: 'string',
     arithmetic: 'arithmetic',
     ignore: 'ignore'
 };

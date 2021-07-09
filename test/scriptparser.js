@@ -246,8 +246,8 @@ describe('ScriptParse test', () => {
 
             let {dataRowItem: dataRowItem2} = DataRowParser.parseLine(0, '"a" "foo" (1+2) (3+a) bar');
             assert(ObjectUtils.arrayEquals(dataRowItem2.dataCellItems, [
-                new DataCellItem(DataCellItemType.bytes, DataCellItem.stringToUInt8Array('a')),
-                new DataCellItem(DataCellItemType.bytes, DataCellItem.stringToUInt8Array('foo')),
+                new DataCellItem(DataCellItemType.string, 'a'),
+                new DataCellItem(DataCellItemType.string, 'foo'),
                 new DataCellItem(DataCellItemType.arithmetic, '1+2'),
                 new DataCellItem(DataCellItemType.arithmetic, '3+a'),
                 new DataCellItem(DataCellItemType.arithmetic, 'bar')
@@ -258,7 +258,7 @@ describe('ScriptParse test', () => {
                 new DataCellItem(DataCellItemType.number, 1),
                 new DataCellItem(DataCellItemType.number, 0),
                 new DataCellItem(DataCellItemType.ignore),
-                new DataCellItem(DataCellItemType.bytes, DataCellItem.stringToUInt8Array('*'))
+                new DataCellItem(DataCellItemType.string, '*')
             ]));
 
             let {dataRowItem: dataRowItem4} = DataRowParser.parseLine(0, '(log2(100)+1) 0b0011 (a + 0xaacc + abs(b)) 1');
@@ -311,10 +311,10 @@ describe('ScriptParse test', () => {
             assert.equal(dataRowItems[1].from, 0);
             assert.equal(dataRowItems[1].to, 9);
             assert.equal(dataRowItems[1].variableName, 'i');
-            assert.equal(dataRowItems[1].dataRowItems.length, 1);
+            assert.equal(dataRowItems[1].childDataRowItems.length, 1);
 
-            assert.equal(dataRowItems[1].dataRowItems[0].type, DataRowItemType.data);
-            assert(ObjectUtils.arrayEquals(dataRowItems[1].dataRowItems[0].dataCellItems, [
+            assert.equal(dataRowItems[1].childDataRowItems[0].type, DataRowItemType.data);
+            assert(ObjectUtils.arrayEquals(dataRowItems[1].childDataRowItems[0].dataCellItems, [
                 new DataCellItem(DataCellItemType.number, 1),
                 new DataCellItem(DataCellItemType.arithmetic, 'i'),
                 new DataCellItem(DataCellItemType.arithmetic, '1+i')
@@ -325,8 +325,8 @@ describe('ScriptParse test', () => {
             assert.equal(dataRowItems[3].from, 0);
             assert.equal(dataRowItems[3].to, 4);
             assert.equal(dataRowItems[3].variableName, undefined);
-            assert.equal(dataRowItems[3].dataRowItems.length, 1);
-            assert.equal(dataRowItems[3].dataRowItems[0].type, DataRowItemType.nop);
+            assert.equal(dataRowItems[3].childDataRowItems.length, 1);
+            assert.equal(dataRowItems[3].childDataRowItems[0].type, DataRowItemType.nop);
         });
 
         it('Test "for" statement', ()=>{
@@ -348,17 +348,17 @@ describe('ScriptParse test', () => {
             assert.equal(dataRowItems[1].from, 0);
             assert.equal(dataRowItems[1].to, 10);
             assert.equal(dataRowItems[1].variableName, 'i');
-            assert.equal(dataRowItems[1].dataRowItems.length, 2);
+            assert.equal(dataRowItems[1].childDataRowItems.length, 2);
 
-            assert.equal(dataRowItems[1].dataRowItems[0].type, DataRowItemType.data);
-            assert(ObjectUtils.arrayEquals(dataRowItems[1].dataRowItems[0].dataCellItems, [
+            assert.equal(dataRowItems[1].childDataRowItems[0].type, DataRowItemType.data);
+            assert(ObjectUtils.arrayEquals(dataRowItems[1].childDataRowItems[0].dataCellItems, [
                 new DataCellItem(DataCellItemType.number, 0),
                 new DataCellItem(DataCellItemType.arithmetic, 'i'),
                 new DataCellItem(DataCellItemType.number, 0)
             ]));
 
-            assert.equal(dataRowItems[1].dataRowItems[1].type, DataRowItemType.data);
-            assert(ObjectUtils.arrayEquals(dataRowItems[1].dataRowItems[1].dataCellItems, [
+            assert.equal(dataRowItems[1].childDataRowItems[1].type, DataRowItemType.data);
+            assert(ObjectUtils.arrayEquals(dataRowItems[1].childDataRowItems[1].dataCellItems, [
                 new DataCellItem(DataCellItemType.arithmetic, '~i'),
                 new DataCellItem(DataCellItemType.arithmetic, 'i'),
                 new DataCellItem(DataCellItemType.number, 0)
@@ -385,25 +385,25 @@ describe('ScriptParse test', () => {
             assert.equal(dataRowItems[0].from, 0);
             assert.equal(dataRowItems[0].to, 10);
             assert.equal(dataRowItems[0].variableName, 'i');
-            assert.equal(dataRowItems[0].dataRowItems.length, 3);
+            assert.equal(dataRowItems[0].childDataRowItems.length, 3);
 
-            let subDataRowItems = dataRowItems[0].dataRowItems;
-            assert.equal(subDataRowItems[0].type, DataRowItemType.data);
-            assert.equal(subDataRowItems[0].lineIdx, 2);
+            let childDataRowItems = dataRowItems[0].childDataRowItems;
+            assert.equal(childDataRowItems[0].type, DataRowItemType.data);
+            assert.equal(childDataRowItems[0].lineIdx, 2);
 
-            assert.equal(subDataRowItems[2].type, DataRowItemType.data);
-            assert.equal(subDataRowItems[2].lineIdx, 6);
+            assert.equal(childDataRowItems[2].type, DataRowItemType.data);
+            assert.equal(childDataRowItems[2].lineIdx, 6);
 
-            assert.equal(subDataRowItems[1].type, DataRowItemType.group);
-            assert.equal(subDataRowItems[1].lineIdx, 3);
-            assert.equal(subDataRowItems[1].from, 15);
-            assert.equal(subDataRowItems[1].to, 20);
-            assert.equal(subDataRowItems[1].variableName, 'j');
-            assert.equal(subDataRowItems[1].dataRowItems.length, 1);
+            assert.equal(childDataRowItems[1].type, DataRowItemType.group);
+            assert.equal(childDataRowItems[1].lineIdx, 3);
+            assert.equal(childDataRowItems[1].from, 15);
+            assert.equal(childDataRowItems[1].to, 20);
+            assert.equal(childDataRowItems[1].variableName, 'j');
+            assert.equal(childDataRowItems[1].childDataRowItems.length, 1);
 
-            assert.equal(subDataRowItems[1].dataRowItems[0].type, DataRowItemType.data);
-            assert.equal(subDataRowItems[1].dataRowItems[0].lineIdx, 4);
-            assert(ObjectUtils.arrayEquals(subDataRowItems[1].dataRowItems[0].dataCellItems, [
+            assert.equal(childDataRowItems[1].childDataRowItems[0].type, DataRowItemType.data);
+            assert.equal(childDataRowItems[1].childDataRowItems[0].lineIdx, 4);
+            assert(ObjectUtils.arrayEquals(childDataRowItems[1].childDataRowItems[0].dataCellItems, [
                 new DataCellItem(DataCellItemType.arithmetic, 'i'),
                 new DataCellItem(DataCellItemType.arithmetic, 'j'),
                 new DataCellItem(DataCellItemType.arithmetic, 'i+j')

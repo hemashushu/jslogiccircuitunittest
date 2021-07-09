@@ -67,7 +67,7 @@ class TestScriptParser {
         };
 
         let appendDataRowItem = (dataRowItem) => {
-            currentGroup.dataRowItems.push(dataRowItem);
+            currentGroup.childDataRowItems.push(dataRowItem);
         };
 
         // push the root group into stack
@@ -139,7 +139,8 @@ class TestScriptParser {
 
         let frontMatter = ObjectUtils.collapseKeyValueArray(frontMatterItems, 'key', 'value');
 
-        let scriptItem = new ScriptItem(scriptName, frontMatter, portItems, rootDataRowItem.dataRowItems);
+        let scriptItem = new ScriptItem(scriptName, frontMatter,
+            portItems, rootDataRowItem.childDataRowItems);
         return scriptItem;
     }
 }

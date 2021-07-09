@@ -24,8 +24,8 @@ class SlicePortItem extends AbstractPortItem {
         super(namePath);
 
         // - ranges: [{bitHigh, bitLow}, ...] 数组
-        // - ranges 的顺序跟脚本书写的顺序一致，即先写
-        //   的范围先加入数组（索引值较小），后写的后加入
+        // - ranges 的顺序跟脚本书写的顺序一致，即先写的
+        //   范围（高位）先加入数组（索引值较小），后写的（低位）后加入
         //   数组（索引值较大）。
         this.bitRanges = bitRanges;
     }
@@ -67,7 +67,7 @@ class CombinedPortItem extends AbstractPortItem {
 
         // - childPortItems: [AbstractPortItem, ...] 数组
         // - childPortItems 的顺序跟脚本书写的顺序一致，即先写
-        //   的范围先加入数组（索引值较小），后写的后加入
+        //   的范围（高位）先加入数组（索引值较小），后写的（低位）后加入
         //   数组（索引值较大）。
         this.childPortItems = childPortItems;
     }
