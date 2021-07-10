@@ -51,7 +51,7 @@ class FrontMatterParser {
 
             value = valueString.substring(1, quotePos);
 
-        }else {
+        } else {
             // 寻找注释符号的位置
             let pos = valueString.indexOf('#');
             if (pos > 0) {

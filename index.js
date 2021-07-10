@@ -1,30 +1,29 @@
-const UnitTestController = require('./src/unittestcontroller');
-const ScriptParser = require('./src/scriptparser');
-const FrontMatterParser = require('./src/frontmatterparser');
-const PortListParser = require('./src/portlistparser');
-const DataRowParser = require('./src/datarowparser');
+const AbstractPortItem = require('./src/abstractportitem');
+const CombinedPortItem = require('./src/combinedportitem');
 const DataCellItem = require('./src/datacellitem');
 const DataCellItemType = require('./src/datacellitemtype');
 const DataRowItem = require('./src/datarowitem');
 const DataRowItemType = require('./src/datarowitemtype');
-
-const { AbstractPortItem,
-    PortItem,
-    SlicePortItem,
-    CombinedPortItem } = require('./src/portitem');
+const DataRowParser = require('./src/datarowparser');
+const FrontMatterParser = require('./src/frontmatterparser');
+const PortItem = require('./src/portitem');
+const PortListParser = require('./src/portlistparser');
+const ScriptParser = require('./src/scriptparser');
+const SlicePortItem = require('./src/sliceportitem');
+const UnitTestController = require('./src/unittestcontroller');
 
 module.exports = {
-    UnitTestController: UnitTestController,
-    ScriptParser: ScriptParser,
-    FrontMatterParser: FrontMatterParser,
-    PortListParser: PortListParser,
-    DataRowParser: DataRowParser,
     AbstractPortItem: AbstractPortItem,
-    PortItem: PortItem,
-    SlicePortItem: SlicePortItem,
     CombinedPortItem: CombinedPortItem,
     DataCellItem: DataCellItem,
     DataCellItemType: DataCellItemType,
     DataRowItem: DataRowItem,
-    DataRowItemType: DataRowItemType
+    DataRowItemType: DataRowItemType,
+    DataRowParser: DataRowParser,
+    FrontMatterParser: FrontMatterParser,
+    PortItem: PortItem,
+    PortListParser: PortListParser,
+    ScriptParser: ScriptParser,
+    SlicePortItem: SlicePortItem,
+    UnitTestController: UnitTestController
 };

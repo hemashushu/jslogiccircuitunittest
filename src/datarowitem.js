@@ -5,9 +5,9 @@ class DataRowItem {
         lineIdx,
         dataCellItems = [],
         variableName, // 可能为 undefined
-        from=0, // 循环的开始值（索引包括）
-        to=0, // 循环的结束值（索引包括）
-        childDataRowItems=[]) {
+        from = 0, // 循环的开始值（索引包括）
+        to = 0, // 循环的结束值（索引包括）
+        childDataRowItems = []) {
 
         this.type = type;
         this.lineIdx = lineIdx;

@@ -12,15 +12,15 @@ class DataRowParser {
             // parse 'nop'
             let nopDataRowItem = DataRowParser.parseNopRow(lineIdx, lineText);
             // appendDataRowItem(nopDataRow);
-            return {dataRowItem: nopDataRowItem};
+            return { dataRowItem: nopDataRowItem };
 
-        }else if (/^\s*repeat\s*\(/.test(lineText)) {
+        } else if (/^\s*repeat\s*\(/.test(lineText)) {
             // parse 'repeat'
             let repeatDataRowItem = DataRowParser.parseRepeatRow(lineIdx, lineText);
             // appendDataRowItem(repeatDataRow);
-            return {dataRowItem: repeatDataRowItem};
+            return { dataRowItem: repeatDataRowItem };
 
-        }else if (/^\s*for\s*\(/.test(lineText)) {
+        } else if (/^\s*for\s*\(/.test(lineText)) {
             // parse 'for'
             let forDataRowItem = DataRowParser.parseForRow(lineIdx, lineText);
             // appendDataRowItem(forDataRow);
@@ -30,14 +30,14 @@ class DataRowParser {
                 isEnterGroup: true
             };
 
-        }else if (/^\s*end(\s*$|\s*#.*$)/.test(lineText)){
+        } else if (/^\s*end(\s*$|\s*#.*$)/.test(lineText)) {
             // 跳出当前组
             // leaveGroup(lineIdx);
             return {
                 isLeaveGroup: true
             };
 
-        }else {
+        } else {
             // parse normal data row
             let dataRowItem = DataRowParser.parseDataRow(lineIdx, lineText);
             // appendDataRowItem(dataRow);
@@ -71,24 +71,24 @@ class DataRowParser {
         let bracketDeepth = 0;
 
         let state = 'expect-cell-start';
-        for(let idx=0; idx<rowText.length; idx++) {
+        for (let idx = 0; idx < rowText.length; idx++) {
             let c = rowText[idx];
-            switch(state){
+            switch (state) {
                 case 'expect-cell-start':
                     {
                         if (c === ' ') {
                             continue;
-                        }else if (c==='(') {
+                        } else if (c === '(') {
                             cellBuffer.push(c);
                             bracketDeepth = 0; // 重置嵌套计数器
                             state = 'expect-bracket-end';
-                        }else if (c==='"') {
+                        } else if (c === '"') {
                             cellBuffer.push(c);
                             state = 'expect-quote-end';
-                        }else if (c==='#') {
-                            idx=rowText.length;
+                        } else if (c === '#') {
+                            idx = rowText.length;
                             break; // 遇到注释字符，需要退出 for 循环
-                        }else {
+                        } else {
                             cellBuffer.push(c);
                             state = 'expect-cell-end';
                         }
@@ -97,15 +97,15 @@ class DataRowParser {
 
                 case 'expect-cell-end':
                     {
-                        if (c===' ') {
+                        if (c === ' ') {
                             let cell = cellBuffer.join('');
                             cells.push(cell);
                             cellBuffer = [];
                             state = 'expect-cell-start';
-                        }else if(c==='#') {
-                            idx=rowText.length;
+                        } else if (c === '#') {
+                            idx = rowText.length;
                             break; // 遇到注释字符，需要退出 for 循环
-                        }else {
+                        } else {
                             cellBuffer.push(c);
                         }
                         break;
@@ -116,19 +116,19 @@ class DataRowParser {
                         if (c === '(') {
                             cellBuffer.push(c);
                             bracketDeepth++; // 嵌套括号开始
-                        }else if(c===')') {
+                        } else if (c === ')') {
                             if (bracketDeepth === 0) {
                                 cellBuffer.push(c);
                                 let cell = cellBuffer.join('');
                                 cells.push(cell);
                                 cellBuffer = [];
                                 state = 'expect-space';
-                            }else {
+                            } else {
                                 bracketDeepth--; // 嵌套括号结束
                                 cellBuffer.push(c);
                             }
 
-                        }else {
+                        } else {
                             cellBuffer.push(c);
                         }
                         break;
@@ -136,13 +136,13 @@ class DataRowParser {
 
                 case 'expect-quote-end':
                     {
-                        if(c==='"') {
+                        if (c === '"') {
                             cellBuffer.push(c);
                             let cell = cellBuffer.join('');
                             cells.push(cell);
                             cellBuffer = [];
                             state = 'expect-space';
-                        }else {
+                        } else {
                             cellBuffer.push(c);
                         }
                         break;
@@ -150,12 +150,12 @@ class DataRowParser {
 
                 case 'expect-space':
                     {
-                        if (c===' ') {
+                        if (c === ' ') {
                             state = 'expect-cell-start';
-                        }else {
+                        } else {
                             throw new ParseException(
                                 'Expect space between data cells, at line: ' + (lineIdx + 1) +
-                                ', position: ' + (idx +1));
+                                ', position: ' + (idx + 1));
                         }
                         break;
                     }
@@ -165,17 +165,17 @@ class DataRowParser {
         if (state === 'expect-cell-end') {
             let cell = cellBuffer.join('');
             cells.push(cell);
-        }else if (
+        } else if (
             state === 'expect-cell-start' ||
             state === 'expect-space') {
             //
-        }else {
+        } else {
             throw new ParseException(
                 'Data row syntax error, at line: ' + (lineIdx + 1));
         }
 
         let dataCellItems = [];
-        for(let cell of cells) {
+        for (let cell of cells) {
             let dataCellItem = DataRowParser.convertToDataCellItem(lineIdx, cell);
             dataCellItems.push(dataCellItem);
         }
@@ -244,20 +244,20 @@ class DataRowParser {
         // ^for\s*\(
         // \s*([a-z][a-z0-9_]*)\s*
         // ,
-        // \s*(\d+)\s*
+        // \s*([\d_]+|0b[01_]+|0x[0-9a-f_]+)\s*
         // ,
-        // \s*(\d+)\s*
+        // \s*([\d_]+|0b[01_]+|0x[0-9a-f_]+)\s*
         // \)$
 
-        let match = /^for\s*\(\s*([a-z][a-z0-9_]*)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/.exec(rowText);
+        let match = /^for\s*\(\s*([a-z][a-z0-9_]*)\s*,\s*([\d_]+|0b[01_]+|0x[0-9a-f_]+)\s*,\s*([\d_]+|0b[01_]+|0x[0-9a-f_]+)\s*\)$/.exec(rowText);
         if (match === null) {
             throw new ParseException(
                 'Data row syntax error, statement: "for", at line: ' + (lineIdx + 1));
         }
 
         let variableName = match[1].trim();
-        let from = Number(match[2]);
-        let to = Number(match[3]);
+        let from = Number(match[2].replace(/_/g, ''));
+        let to = Number(match[3].replace(/_/g, ''));
 
         // 生成一个 childDataRowItems 属性值为空数组的 DataRowItem 对象，返回
         // 主脚本解析程序会填充 childDataRowItems。
@@ -282,17 +282,17 @@ class DataRowParser {
             // 字符串
             let cellTextContent = cellText.substring(1, cellText.length - 1);
             return DataRowParser.convertToStringDataCellItem(cellTextContent);
-        }else if (cellText.startsWith('(')) {
+        } else if (cellText.startsWith('(')) {
             // 算术表达式
             let cellTextContent = cellText.substring(1, cellText.length - 1);
             return DataRowParser.convertToArithmeticDataCellItem(cellTextContent);
-        }else if (cellText === '*') {
+        } else if (cellText === '*') {
             // 忽略值
             return DataRowParser.convertToIgnoreDataCellItem();
-        }else if (/^[a-z][a-z0-9_]*$/.test(cellText)) {
+        } else if (/^[a-z][a-z0-9_]*$/.test(cellText)) {
             // 变量值
             return DataRowParser.convertToArithmeticDataCellItem(cellText);
-        }else {
+        } else {
             return DataRowParser.convertToNumberDataCellItem(lineIdx, cellText);
         }
     }

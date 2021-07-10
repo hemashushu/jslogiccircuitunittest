@@ -1,7 +1,7 @@
 const path = require('path');
 
 const { PromiseTextFile } = require('jstextfile');
-const {ObjectUtils} = require('jsobjectutils');
+const { ObjectUtils } = require('jsobjectutils');
 
 const { ParseException } = require('jsexception');
 
@@ -13,16 +13,12 @@ const FrontMatterParser = require('./frontmatterparser');
 const ScriptItem = require('./scriptitem');
 
 class TestScriptParser {
-    constructor() {
-        //
-    }
-
     static async parseFile(filePath) {
         let fileName = path.basename(filePath);
         let extName = path.extname(fileName);
         let scriptName = fileName.substring(0, fileName.length - extName.length);
 
-        let {textContent} = await PromiseTextFile.read(filePath);
+        let { textContent } = await PromiseTextFile.read(filePath);
         return TestScriptParser.parse(scriptName, textContent);
     }
 
@@ -78,7 +74,7 @@ class TestScriptParser {
         });
 
         let state = 'expect-fm-start-or-portlist'; // front-matter or port list
-        for(let lineIdx = 0; lineIdx< lineTexts.length; lineIdx++) {
+        for (let lineIdx = 0; lineIdx < lineTexts.length; lineIdx++) {
             let lineText = lineTexts[lineIdx];
 
             if (lineText === '' ||
@@ -86,12 +82,12 @@ class TestScriptParser {
                 continue;
             }
 
-            switch(state) {
+            switch (state) {
                 case 'expect-fm-start-or-portlist':
                     {
-                        if (lineText === '---'){
+                        if (lineText === '---') {
                             state = 'expect-fm-end';
-                        }else {
+                        } else {
                             portItems = PortListParser.parse(lineIdx, lineText);
                             state = 'expect-data-row';
                         }
@@ -102,7 +98,7 @@ class TestScriptParser {
                     {
                         if (lineText === '---') {
                             state = 'expect-portlist';
-                        }else {
+                        } else {
                             let frontMatter = FrontMatterParser.parseLine(lineIdx, lineText);
                             frontMatterItems.push(frontMatter);
                         }
@@ -126,10 +122,10 @@ class TestScriptParser {
 
                         if (isLeaveGroup === true) {
                             leaveGroup(lineIdx);
-                        }else if(isEnterGroup) {
+                        } else if (isEnterGroup) {
                             appendDataRowItem(dataRowItem);
                             enterGroup(dataRowItem);
-                        }else {
+                        } else {
                             appendDataRowItem(dataRowItem);
                         }
                         break;

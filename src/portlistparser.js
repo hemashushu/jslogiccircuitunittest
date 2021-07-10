@@ -1,12 +1,10 @@
 const { ParseException } = require('jsexception');
 
-const {BitRange} = require('jslogiccircuit');
+const { BitRange } = require('jslogiccircuit');
 
-const {
-    PortItem,
-    SlicePortItem,
-    CombinedPortItem
-} = require('./portitem');
+const PortItem = require('./portitem');
+const SlicePortItem = require('./sliceportitem');
+const CombinedPortItem = require('./combinedportitem');
 
 class PortListParser {
     /**
@@ -65,23 +63,23 @@ class PortListParser {
 
         let state = 'expect-port-start';
 
-        for(let idx=0; idx<lineText.length; idx++) {
+        for (let idx = 0; idx < lineText.length; idx++) {
             let c = lineText[idx];
 
-            switch(state) {
+            switch (state) {
                 case 'expect-port-start':
                     {
-                        if (c===' ') {
+                        if (c === ' ') {
                             continue;
-                        }else if (c==='{') {
+                        } else if (c === '{') {
                             portTextBuffer.push(c);
                             state = 'expect-curly-bracket-end';
-                        }else if(c==='"') {
+                        } else if (c === '"') {
                             state = 'expect-double-quote-end';
-                        }else if (c==='#') {
+                        } else if (c === '#') {
                             idx = lineText.length;
                             break; // 遇到注释字符，需要退出 for 循环
-                        }else{
+                        } else {
                             portTextBuffer.push(c);
                             state = 'expect-port-end';
                         }
@@ -90,21 +88,21 @@ class PortListParser {
 
                 case 'expect-port-end':
                     {
-                        if (c==='[') {
+                        if (c === '[') {
                             portTextBuffer.push(c);
                             state = 'expect-square-bracket-end';
-                        }else if (c==='.') {
+                        } else if (c === '.') {
                             portTextBuffer.push(c);
                             state = 'expect-sub-port-start';
-                        }else if(c===' ') {
+                        } else if (c === ' ') {
                             let name = portTextBuffer.join('');
                             portTexts.push(name);
                             portTextBuffer = [];
                             state = 'expect-port-start';
-                        }else if (c==='#') {
+                        } else if (c === '#') {
                             idx = lineText.length;
                             break; // 遇到注释字符，需要退出 for 循环
-                        }else {
+                        } else {
                             portTextBuffer.push(c);
                         }
                         break;
@@ -112,13 +110,13 @@ class PortListParser {
 
                 case 'expect-square-bracket-end':
                     {
-                        if (c===']') {
+                        if (c === ']') {
                             portTextBuffer.push(c);
                             let name = portTextBuffer.join('');
                             portTexts.push(name);
                             portTextBuffer = [];
                             state = 'expect-space';
-                        }else {
+                        } else {
                             portTextBuffer.push(c);
                         }
                         break;
@@ -126,13 +124,13 @@ class PortListParser {
 
                 case 'expect-curly-bracket-end':
                     {
-                        if (c==='}') {
+                        if (c === '}') {
                             portTextBuffer.push(c);
                             let name = portTextBuffer.join('');
                             portTexts.push(name);
                             portTextBuffer = [];
                             state = 'expect-space';
-                        }else {
+                        } else {
                             portTextBuffer.push(c);
                         }
                         break;
@@ -142,11 +140,11 @@ class PortListParser {
                     {
                         if (c === ' ') {
                             state = 'expect-port-start';
-                        }else if (c==='#') {
+                        } else if (c === '#') {
                             idx = lineText.length;
                             break; // 遇到注释字符，需要退出 for 循环
-                        }else {
-                            throw new ParseException('Expect space between port names, at line: ' + (lineIdx+1) +
+                        } else {
+                            throw new ParseException('Expect space between port names, at line: ' + (lineIdx + 1) +
                                 ', position: ' + (idx + 1));
                         }
                         break;
@@ -154,10 +152,10 @@ class PortListParser {
 
                 case 'expect-double-quote-end':
                     {
-                        if (c==='"') {
+                        if (c === '"') {
                             portTextBuffer.push(c);
                             state = 'expect-next-port-or-sub-port-start-or-square-bracket-start';
-                        }else {
+                        } else {
                             portTextBuffer.push(c);
                         }
                         break;
@@ -165,21 +163,21 @@ class PortListParser {
 
                 case 'expect-next-port-or-sub-port-start-or-square-bracket-start': // 遇到双引号结束之后
                     {
-                        if (c==='.') {
+                        if (c === '.') {
                             portTextBuffer.push(c);
                             state = 'expect-sub-port-start';
-                        }else if (c=== '[') {
+                        } else if (c === '[') {
                             portTextBuffer.push(c);
                             state = 'expect-square-bracket-end';
-                        }else if (c===' '){
+                        } else if (c === ' ') {
                             let name = portTextBuffer.join('');
                             portTexts.push(name);
                             portTextBuffer = [];
                             state = 'expect-port-start';
-                        }else if (c==='#') {
+                        } else if (c === '#') {
                             idx = lineText.length;
                             break; // 遇到注释字符，需要退出 for 循环
-                        }else {
+                        } else {
                             throw new ParseException(
                                 'Expect port name start, at line: ' + (lineIdx + 1) +
                                 ', position: ' + (idx + 1));
@@ -191,7 +189,7 @@ class PortListParser {
                     {
                         if (c === '"') {
                             state = 'expect-double-quote-end';
-                        }else {
+                        } else {
                             portTextBuffer.push(c);
                             state = 'expect-port-end';
                         }
@@ -203,12 +201,12 @@ class PortListParser {
         if (state === 'expect-port-end') {
             let name = portTextBuffer.join('');
             portTexts.push(name);
-        }else if(
+        } else if (
             state === 'expect-port-start' ||
             state === 'expect-space' ||
-            state === 'expect-next-port-or-sub-port-start-or-square-bracket-start'){
+            state === 'expect-next-port-or-sub-port-start-or-square-bracket-start') {
             //
-        }else {
+        } else {
             throw new ParseException(
                 'Port list syntax error, at line: ' + (lineIdx + 1));
         }
@@ -218,7 +216,7 @@ class PortListParser {
         });
 
         // 检查端口语法
-        for(let portItem of portItems) {
+        for (let portItem of portItems) {
             if (!portItem.isValid()) {
                 throw new ParseException(
                     'Port name syntax error, text: "' + portItem.getTitle() + '"');
@@ -232,10 +230,10 @@ class PortListParser {
         if (portText.startsWith('{')) {
             return PortListParser.convertToCombinedPortItem(portText);
 
-        }else if (portText.indexOf('[')>0) {
+        } else if (portText.indexOf('[') > 0) {
             return PortListParser.convertToSlicePortItem(portText);
 
-        }else {
+        } else {
             return PortListParser.convertToPortItem(portText);
         }
     }
@@ -250,17 +248,17 @@ class PortListParser {
 
         let state = 'expect-port-start';
 
-        for(let idx=0; idx<textContent.length; idx++) {
+        for (let idx = 0; idx < textContent.length; idx++) {
             let c = textContent[idx];
 
-            switch(state) {
+            switch (state) {
                 case 'expect-port-start':
                     {
-                        if (c===' ') {
+                        if (c === ' ') {
                             continue;
-                        }else if(c==='"') {
+                        } else if (c === '"') {
                             state = 'expect-double-quote-end';
-                        }else{
+                        } else {
                             portTextBuffer.push(c);
                             state = 'expect-port-end';
                         }
@@ -269,18 +267,18 @@ class PortListParser {
 
                 case 'expect-port-end':
                     {
-                        if (c==='[') {
+                        if (c === '[') {
                             portTextBuffer.push(c);
                             state = 'expect-square-bracket-end';
-                        }else if (c==='.') {
+                        } else if (c === '.') {
                             portTextBuffer.push(c);
                             state = 'expect-sub-port-start';
-                        }else if(c===',') {
+                        } else if (c === ',') {
                             let name = portTextBuffer.join('');
                             portTexts.push(name);
                             portTextBuffer = [];
                             state = 'expect-port-start';
-                        }else {
+                        } else {
                             portTextBuffer.push(c);
                         }
                         break;
@@ -288,13 +286,13 @@ class PortListParser {
 
                 case 'expect-square-bracket-end':
                     {
-                        if (c===']') {
+                        if (c === ']') {
                             portTextBuffer.push(c);
                             let name = portTextBuffer.join('');
                             portTexts.push(name);
                             portTextBuffer = [];
                             state = 'expect-comma';
-                        }else {
+                        } else {
                             portTextBuffer.push(c);
                         }
                         break;
@@ -302,9 +300,9 @@ class PortListParser {
 
                 case 'expect-comma':
                     {
-                        if (c===' ') {
+                        if (c === ' ') {
                             //
-                        }else if (c===',') {
+                        } else if (c === ',') {
                             state = 'expect-port-start';
                         }
                         break;
@@ -312,10 +310,10 @@ class PortListParser {
 
                 case 'expect-double-quote-end':
                     {
-                        if (c==='"') {
+                        if (c === '"') {
                             portTextBuffer.push(c);
                             state = 'expect-comma-or-sub-port-start-or-square-bracket-start';
-                        }else {
+                        } else {
                             portTextBuffer.push(c);
                         }
                         break;
@@ -323,20 +321,20 @@ class PortListParser {
 
                 case 'expect-comma-or-sub-port-start-or-square-bracket-start': // 遇到双引号结束之后
                     {
-                        if (c==='.') {
+                        if (c === '.') {
                             portTextBuffer.push(c);
                             state = 'expect-sub-port-start';
-                        }else if (c=== '[') {
+                        } else if (c === '[') {
                             portTextBuffer.push(c);
                             state = 'expect-square-bracket-end';
-                        }else if (c===','){
+                        } else if (c === ',') {
                             let name = portTextBuffer.join('');
                             portTexts.push(name);
                             portTextBuffer = [];
                             state = 'expect-port-start';
-                        }else {
+                        } else {
                             throw new ParseException(
-                                'Port name syntax error, text: "' + portText + '", at position: ' + (idx+1));
+                                'Port name syntax error, text: "' + portText + '", at position: ' + (idx + 1));
                         }
                         break;
                     }
@@ -345,7 +343,7 @@ class PortListParser {
                     {
                         if (c === '"') {
                             state = 'expect-double-quote-end';
-                        }else {
+                        } else {
                             portTextBuffer.push(c);
                             state = 'expect-port-end';
                         }
@@ -357,27 +355,27 @@ class PortListParser {
         if (state === 'expect-port-end') {
             let name = portTextBuffer.join('');
             portTexts.push(name);
-        }else if(
+        } else if (
             state === 'expect-port-start' ||
             state === 'expect-comma' ||
-            state === 'expect-comma-or-sub-port-start-or-square-bracket-start'){
+            state === 'expect-comma-or-sub-port-start-or-square-bracket-start') {
             //
-        }else {
+        } else {
             throw new ParseException('Port name syntax error, text: "' + portText + '"');
         }
 
         // 花括号里提取出来的端口名称可能包含有前后空格
-        portTexts = portTexts.map(item=>{
+        portTexts = portTexts.map(item => {
             return item.trim();
         });
 
         let portItems = [];
-        for(let portText of portTexts) {
-            if (portText.indexOf('[')>0) {
+        for (let portText of portTexts) {
+            if (portText.indexOf('[') > 0) {
                 let portItem = PortListParser.convertToSlicePortItem(portText);
                 portItems.push(portItem);
 
-            }else {
+            } else {
                 let portItem = PortListParser.convertToPortItem(portText);
                 portItems.push(portItem);
             }
@@ -398,14 +396,14 @@ class PortListParser {
             return text.trim();
         });
 
-        for(let rangeText of rangeTexts) {
+        for (let rangeText of rangeTexts) {
             let spos = rangeText.indexOf(':');
             if (spos > 0) {
                 let bitHigh = parseInt(rangeText.substring(0, spos), 10);
                 let bitLow = parseInt(rangeText.substring(spos + 1), 10);
                 let bitRange = new BitRange(bitHigh, bitLow);
                 bitRanges.push(bitRange);
-            }else {
+            } else {
                 let bit = parseInt(rangeText);
                 let bitRange = new BitRange(bit, bit);
                 bitRanges.push(bitRange);

@@ -1,83 +1,80 @@
 const path = require('path');
 
-const {ObjectUtils} = require('jsobjectutils');
-const {ParseException} = require('jsexception');
+const { ObjectUtils } = require('jsobjectutils');
 
-const { Binary } = require('jsbinary');
-const { LogicPackageLoader, BitRange } = require('jslogiccircuit');
-const { UnitTestController,
+const { BitRange } = require('jslogiccircuit');
+
+const {
     ScriptParser,
     FrontMatterParser,
     PortListParser,
     DataRowParser,
-    AbstractPortItem,
     PortItem,
     SlicePortItem,
     CombinedPortItem,
     DataCellItem,
     DataCellItemType,
-    DataRowItem,
     DataRowItemType
 } = require('../index');
 
 const assert = require('assert/strict');
 
 describe('ScriptParse test', () => {
-    describe('FrontMatterParser test', ()=>{
-        it('Test base', ()=>{
+    describe('FrontMatterParser test', () => {
+        it('Test base', () => {
             let fm1 = FrontMatterParser.parseLine(0, 'number: 123');
-            assert(ObjectUtils.equals(fm1, {key: 'number', value: 123}));
+            assert(ObjectUtils.equals(fm1, { key: 'number', value: 123 }));
 
             let fm2 = FrontMatterParser.parseLine(0, 'boolean:True');
-            assert(ObjectUtils.equals(fm2, {key: 'boolean', value: true}));
+            assert(ObjectUtils.equals(fm2, { key: 'boolean', value: true }));
 
             let fm3 = FrontMatterParser.parseLine(0, 'string: foo');
-            assert(ObjectUtils.equals(fm3, {key: 'string', value: 'foo'}));
+            assert(ObjectUtils.equals(fm3, { key: 'string', value: 'foo' }));
 
             let fm4 = FrontMatterParser.parseLine(0, 'quote string: "Foo Bar"');
-            assert(ObjectUtils.equals(fm4, {key: 'quote string', value: 'Foo Bar'}));
+            assert(ObjectUtils.equals(fm4, { key: 'quote string', value: 'Foo Bar' }));
 
             let fm5 = FrontMatterParser.parseLine(0, 'long number: 123_456');
-            assert(ObjectUtils.equals(fm5, {key: 'long number', value: 123456}));
+            assert(ObjectUtils.equals(fm5, { key: 'long number', value: 123456 }));
 
             let fm6 = FrontMatterParser.parseLine(0, 'binary: 0b11_00');
-            assert(ObjectUtils.equals(fm6, {key: 'binary', value: 0b1100}));
+            assert(ObjectUtils.equals(fm6, { key: 'binary', value: 0b1100 }));
 
             let fm7 = FrontMatterParser.parseLine(0, 'hex: 0xff_00');
-            assert(ObjectUtils.equals(fm7, {key: 'hex', value: 0xff00}));
+            assert(ObjectUtils.equals(fm7, { key: 'hex', value: 0xff00 }));
 
             let fm8 = FrontMatterParser.parseLine(0, 'number with comment: 456 # rem1');
-            assert(ObjectUtils.equals(fm8, {key: 'number with comment', value: 456}));
+            assert(ObjectUtils.equals(fm8, { key: 'number with comment', value: 456 }));
 
             let fm9 = FrontMatterParser.parseLine(0, 'boolean with comment: false # rem2');
-            assert(ObjectUtils.equals(fm9, {key: 'boolean with comment', value: false}));
+            assert(ObjectUtils.equals(fm9, { key: 'boolean with comment', value: false }));
 
             let fm10 = FrontMatterParser.parseLine(0, 'string with comment: hello # rem3');
-            assert(ObjectUtils.equals(fm10, {key: 'string with comment', value: 'hello'}));
+            assert(ObjectUtils.equals(fm10, { key: 'string with comment', value: 'hello' }));
 
             let fm11 = FrontMatterParser.parseLine(0, 'quote string with comment: "hello # world"  #rem4');
-            assert(ObjectUtils.equals(fm11, {key: 'quote string with comment', value: 'hello # world'}));
+            assert(ObjectUtils.equals(fm11, { key: 'quote string with comment', value: 'hello # world' }));
         });
 
-        it('Test exception', ()=>{
-            try{
+        it('Test exception', () => {
+            try {
                 FrontMatterParser.parseLine('string with no ending quote: "Hello! World');
                 fail();
-            }catch(ParseException) {
+            } catch (ParseException) {
                 //
             }
 
-            try{
+            try {
                 FrontMatterParser.parseLine('no colon');
                 fail();
-            }catch(ParseException) {
+            } catch (ParseException) {
                 //
             }
         });
     });
 
-    describe('PortListParser test', ()=>{
-        it('Test base', ()=>{
+    describe('PortListParser test', () => {
+        it('Test base', () => {
             // 多个端口
             let portItems1 = PortListParser.parse(0, 'A B Q');
             assert.equal(portItems1.length, 3);
@@ -89,12 +86,12 @@ describe('ScriptParse test', () => {
             let portItems2 = PortListParser.parse(0, 'A[12]');
             assert.equal(portItems2.length, 1);
             assert(portItems2[0] instanceof SlicePortItem);
-            assert(ObjectUtils.objectEquals(portItems2[0], new SlicePortItem('A', [new BitRange(12,12)])));
+            assert(ObjectUtils.objectEquals(portItems2[0], new SlicePortItem('A', [new BitRange(12, 12)])));
 
             // 端口切片-范围
             let portItems3 = PortListParser.parse(0, 'A[7:0]');
             assert.equal(portItems3.length, 1);
-            assert(ObjectUtils.objectEquals(portItems3[0], new SlicePortItem('A', [new BitRange(7,0)])));
+            assert(ObjectUtils.objectEquals(portItems3[0], new SlicePortItem('A', [new BitRange(7, 0)])));
 
 
             // 端口切片-多段
@@ -102,55 +99,55 @@ describe('ScriptParse test', () => {
             assert.equal(portItems4.length, 1);
             assert(ObjectUtils.objectEquals(portItems4[0],
                 new SlicePortItem('A', [
-                new BitRange(14, 14),
-                new BitRange(12, 10),
-                new BitRange(9, 9),
-                new BitRange(7, 0)
-            ])));
+                    new BitRange(14, 14),
+                    new BitRange(12, 10),
+                    new BitRange(9, 9),
+                    new BitRange(7, 0)
+                ])));
 
             // 端口拼接
             let portItems5 = PortListParser.parse(0, '{A3,A2,A1,A0}');
             assert.equal(portItems5.length, 1);
             assert(portItems5[0] instanceof CombinedPortItem);
             assert(ObjectUtils.arrayEquals(portItems5[0].childPortItems,
-            [
-                new PortItem('A3'),
-                new PortItem('A2'),
-                new PortItem('A1'),
-                new PortItem('A0')
-            ]));
+                [
+                    new PortItem('A3'),
+                    new PortItem('A2'),
+                    new PortItem('A1'),
+                    new PortItem('A0')
+                ]));
 
             // 拼接内含切片
             let portItems6 = PortListParser.parse(0, '{A[7:0],B[12, 4:0],C}');
             assert(ObjectUtils.arrayEquals(portItems6[0].childPortItems,
-            [
-                new SlicePortItem('A', [new BitRange(7,0)]),
-                new SlicePortItem('B', [new BitRange(12,12), new BitRange(4,0)]),
-                new PortItem('C')
-            ]));
+                [
+                    new SlicePortItem('A', [new BitRange(7, 0)]),
+                    new SlicePortItem('B', [new BitRange(12, 12), new BitRange(4, 0)]),
+                    new PortItem('C')
+                ]));
 
             // 单端口、切片、拼接
             let portItems7 = PortListParser.parse(0, 'A B[4:0] {Cout, S}');
             assert.equal(portItems7.length, 3);
             assert(ObjectUtils.arrayEquals(portItems7,
-            [
-                new PortItem('A'),
-                new SlicePortItem('B', [new BitRange(4,0)]),
-                new CombinedPortItem([
-                    new PortItem('Cout'),
-                    new PortItem('S')
-                ])
-            ]));
+                [
+                    new PortItem('A'),
+                    new SlicePortItem('B', [new BitRange(4, 0)]),
+                    new CombinedPortItem([
+                        new PortItem('Cout'),
+                        new PortItem('S')
+                    ])
+                ]));
         });
 
-        it('Test name path', ()=>{
+        it('Test name path', () => {
             let portItems10 = PortListParser.parse(0, 'A.B.C');
             assert.equal(portItems10.length, 1);
             assert(ObjectUtils.objectEquals(portItems10[0], new PortItem('A.B.C')));
 
             let portItems11 = PortListParser.parse(0, 'A.B.C[4:0]');
             assert.equal(portItems11.length, 1);
-            assert(ObjectUtils.objectEquals(portItems11[0], new SlicePortItem('A.B.C', [new BitRange(4,0)])));
+            assert(ObjectUtils.objectEquals(portItems11[0], new SlicePortItem('A.B.C', [new BitRange(4, 0)])));
 
             let portItems12 = PortListParser.parse(0, '{A.B.C, X.Y.Z}');
             assert.equal(portItems12.length, 1);
@@ -164,7 +161,7 @@ describe('ScriptParse test', () => {
             assert(ObjectUtils.objectEquals(portItems13[0], new CombinedPortItem([
                 new PortItem('A.B.C'),
                 new PortItem('D'),
-                new SlicePortItem('X.Y.Z', [new BitRange(7,0)])
+                new SlicePortItem('X.Y.Z', [new BitRange(7, 0)])
             ])));
 
             // 带注释
@@ -193,47 +190,47 @@ describe('ScriptParse test', () => {
                     new PortItem('Cout'),
                     new PortItem('S')
                 ]),
-                new SlicePortItem('B', [new BitRange(4,0)])
+                new SlicePortItem('B', [new BitRange(4, 0)])
             ]));
         });
 
-        it('Test exception', ()=>{
-            try{
+        it('Test exception', () => {
+            try {
                 PortListParser.parse(0, 'A.');
                 fail();
-            }catch(ParseException){
+            } catch (ParseException) {
                 //
             }
 
-            try{
+            try {
                 PortListParser.parse(0, 'A[2');
-            }catch(ParseException) {
+            } catch (ParseException) {
                 //
             }
 
-            try{
+            try {
                 PortListParser.parse(0, '{A');
-            }catch(ParseException) {
+            } catch (ParseException) {
                 //
             }
 
-            try{
+            try {
                 PortListParser.parse(0, '{B A.}');
-            }catch(ParseException) {
+            } catch (ParseException) {
                 //
             }
 
-            try{
+            try {
                 PortListParser.parse(0, '{B A[2]}');
-            }catch(ParseException) {
+            } catch (ParseException) {
                 //
             }
         });
     });
 
-    describe('DataRowParser test',()=>{
-        it('Test data statement',() => {
-            let {dataRowItem: dataRowItem1} =  DataRowParser.parseLine(0, '0 1 0 1 0b1100 0xff00');
+    describe('DataRowParser test', () => {
+        it('Test data statement', () => {
+            let { dataRowItem: dataRowItem1 } = DataRowParser.parseLine(0, '0 1 0 1 0b1100 0xff00');
             assert.equal(dataRowItem1.type, DataRowItemType.data);
             assert(ObjectUtils.arrayEquals(dataRowItem1.dataCellItems, [
                 new DataCellItem(DataCellItemType.number, 0),
@@ -244,7 +241,7 @@ describe('ScriptParse test', () => {
                 new DataCellItem(DataCellItemType.number, 0xff00)
             ]));
 
-            let {dataRowItem: dataRowItem2} = DataRowParser.parseLine(0, '"a" "foo" (1+2) (3+a) bar');
+            let { dataRowItem: dataRowItem2 } = DataRowParser.parseLine(0, '"a" "foo" (1+2) (3+a) bar');
             assert(ObjectUtils.arrayEquals(dataRowItem2.dataCellItems, [
                 new DataCellItem(DataCellItemType.string, 'a'),
                 new DataCellItem(DataCellItemType.string, 'foo'),
@@ -253,7 +250,7 @@ describe('ScriptParse test', () => {
                 new DataCellItem(DataCellItemType.arithmetic, 'bar')
             ]));
 
-            let {dataRowItem: dataRowItem3} = DataRowParser.parseLine(0, '1 0 * "*"');
+            let { dataRowItem: dataRowItem3 } = DataRowParser.parseLine(0, '1 0 * "*"');
             assert(ObjectUtils.arrayEquals(dataRowItem3.dataCellItems, [
                 new DataCellItem(DataCellItemType.number, 1),
                 new DataCellItem(DataCellItemType.number, 0),
@@ -261,7 +258,7 @@ describe('ScriptParse test', () => {
                 new DataCellItem(DataCellItemType.string, '*')
             ]));
 
-            let {dataRowItem: dataRowItem4} = DataRowParser.parseLine(0, '(log2(100)+1) 0b0011 (a + 0xaacc + abs(b)) 1');
+            let { dataRowItem: dataRowItem4 } = DataRowParser.parseLine(0, '(log2(100)+1) 0b0011 (a + 0xaacc + abs(b)) 1');
             assert(ObjectUtils.arrayEquals(dataRowItem4.dataCellItems, [
                 new DataCellItem(DataCellItemType.arithmetic, 'log2(100)+1'),
                 new DataCellItem(DataCellItemType.number, 0b0011),
@@ -270,7 +267,7 @@ describe('ScriptParse test', () => {
             ]));
         });
 
-        it('Test "nop" statement', ()=>{
+        it('Test "nop" statement', () => {
             let textContent =
                 'A B Q\n' +
                 '0 0 0\n' +
@@ -293,7 +290,7 @@ describe('ScriptParse test', () => {
             assert.equal(dataRowItems[3].type, DataRowItemType.data);
         });
 
-        it('Test "repeat" statement', ()=>{
+        it('Test "repeat" statement', () => {
             let textContent =
                 'A B Q\n' +
                 '0 0 0\n' +
@@ -329,7 +326,7 @@ describe('ScriptParse test', () => {
             assert.equal(dataRowItems[3].childDataRowItems[0].type, DataRowItemType.nop);
         });
 
-        it('Test "for" statement', ()=>{
+        it('Test "for" statement', () => {
             let textContent =
                 'A B Q\n' +
                 '0 0 0\n' +
@@ -365,7 +362,7 @@ describe('ScriptParse test', () => {
             ]));
         });
 
-        it('Test cascading "for" statement', ()=>{
+        it('Test cascading "for" statement', () => {
             let textContent =
                 'A B Q\n' +
                 'for(i, 0, 10)\n' +
@@ -411,9 +408,9 @@ describe('ScriptParse test', () => {
         });
     });
 
-    it('Test parse', ()=>{
+    it('Test parse', () => {
         let textContent =
-        `---
+            `---
         bitWidth: 1
         inputPinCount: 2
         ---
@@ -466,7 +463,7 @@ describe('ScriptParse test', () => {
 
     });
 
-    it('Test parseFile', async ()=>{
+    it('Test parseFile', async () => {
         let testDirectory = __dirname;
         let resourcesDirectory = path.join(testDirectory, 'resources');
         let scriptFile1 = path.join(resourcesDirectory, 'sample_test_script_1.txt');

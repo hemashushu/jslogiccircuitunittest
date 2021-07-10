@@ -26,7 +26,7 @@ class SliceTestPin extends AbstractTestPin {
         let lastData = this._pin.getData(); // Binary 对象
 
         let offset = 0;
-        for(let idx=this.bitRanges.length - 1; idx>=0; idx--){
+        for (let idx = this.bitRanges.length - 1; idx >= 0; idx--) {
             let bitRange = this.bitRanges[idx];
             let partialData = data.slice(offset, bitRange.getBitWidth());
             lastData = lastData.splice(bitRange.bitLow, partialData);
@@ -41,7 +41,7 @@ class SliceTestPin extends AbstractTestPin {
 
         let data = Binary.fromBinaryString('0', this.bitWidth);
         let offset = 0;
-        for(let idx=this.bitRanges.length - 1; idx>=0; idx--){
+        for (let idx = this.bitRanges.length - 1; idx >= 0; idx--) {
             let bitRange = this.bitRanges[idx];
             let partialData = lastData.slice(bitRange.bitLow, bitRange.getBitWidth());
             data = data.splice(offset, partialData);
@@ -52,7 +52,7 @@ class SliceTestPin extends AbstractTestPin {
 
     static getBitRangesBitWidth(bitRanges) {
         let bitWidth = 0;
-        for(let bitRange of bitRanges) {
+        for (let bitRange of bitRanges) {
             bitWidth += bitRange.getBitWidth();
         }
         return bitWidth;

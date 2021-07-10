@@ -1,0 +1,7 @@
+{A3,A2,A1,A0} {B3,B2,B1,B0} Cin {Cout, S3, S2,S1,S0}
+for(a,0,15)
+  for(b,0,15)
+    a b 0 (a+b)
+    a b 1 (a+b+1)
+  end
+end

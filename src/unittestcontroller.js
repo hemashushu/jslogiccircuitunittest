@@ -1,15 +1,15 @@
 const { ParseException } = require('jsexception');
-const {Binary} = require('jsbinary');
+const { Binary } = require('jsbinary');
 
-const {VariableCalculator} = require('jsvariablecalculator');
+const { VariableCalculator } = require('jsvariablecalculator');
 
 const { AbstractLogicModule,
     ModuleController,
     LogicModuleFactory } = require('jslogiccircuit');
 
-const {PortItem,
-    SlicePortItem,
-    CombinedPortItem} = require('./portitem');
+const PortItem = require('./portitem');
+const SlicePortItem = require('./sliceportitem');
+const CombinedPortItem = require('./combinedportitem');
 
 const TestPin = require('./testpin');
 const SliceTestPin = require('./slicetestpin');
@@ -43,8 +43,8 @@ class UnitTestController {
 
         // 构造模块测试参数
         let parameters = {};
-        for(let key in frontMatter) {
-            if (key.startsWith('!')){
+        for (let key in frontMatter) {
+            if (key.startsWith('!')) {
                 continue;
             }
 
@@ -70,46 +70,46 @@ class UnitTestController {
      */
     generateTestPins(logicModule, portItems) {
         let testPins = [];
-        for(let portItem of portItems) {
+        for (let portItem of portItems) {
             testPins.push(this.generateTestPin(logicModule, portItem));
         }
         return testPins;
     }
 
     generateTestPin(logicModule, portItem) {
-        if(portItem instanceof PortItem){
+        if (portItem instanceof PortItem) {
             return this.convertToTestPin(logicModule, portItem);
-        }else if(portItem instanceof SlicePortItem) {
+        } else if (portItem instanceof SlicePortItem) {
             return this.convertToSliceTestPin(logicModule, portItem);
-        }else {
+        } else {
             return this.convertToCombinedTestPin(logicModule, portItem);
         }
     }
 
     convertToTestPin(logicModule, portItem) {
-        let {pin, canTestInput} = this.getPinByNamePath(logicModule, portItem.namePath);
+        let { pin, canTestInput } = this.getPinByNamePath(logicModule, portItem.namePath);
         let title = portItem.getTitle();
         return new TestPin(title, canTestInput, pin);
     }
 
     convertToSliceTestPin(logicModule, slicePortItem) {
-        let {pin, canTestInput} = this.getPinByNamePath(logicModule, slicePortItem.namePath);
+        let { pin, canTestInput } = this.getPinByNamePath(logicModule, slicePortItem.namePath);
         let title = slicePortItem.getTitle();
         return new SliceTestPin(title, canTestInput, slicePortItem.bitRanges, pin);
     }
 
     convertToCombinedTestPin(logicModule, combinedPortItem) {
         let childTestPins = [];
-        for(let portItem of combinedPortItem.childPortItems) {
+        for (let portItem of combinedPortItem.childPortItems) {
             if (portItem instanceof PortItem) {
                 childTestPins.push(this.convertToTestPin(logicModule, portItem));
-            }else {
+            } else {
                 childTestPins.push(this.convertToSliceTestPin(logicModule, portItem));
             }
         }
 
         let canTestInput = true;
-        for(let testPin of childTestPins) {
+        for (let testPin of childTestPins) {
             if (testPin.isInput === false) {
                 canTestInput = false;
             }
@@ -142,10 +142,10 @@ class UnitTestController {
         }
 
         let targetLogicModule = logicModule;
-        for(let idx=0;idx<names.length - 1;idx++) {
+        for (let idx = 0; idx < names.length - 1; idx++) {
             let logicModuleName = names[idx];
             targetLogicModule = targetLogicModule.getLogicModule(logicModuleName);
-            if (targetLogicModule === undefined){
+            if (targetLogicModule === undefined) {
                 throw new ParseException('Can not found the module: ' + logicModuleName);
             }
         }
@@ -190,19 +190,19 @@ class UnitTestController {
     test() {
         let variableContext = {};
         let groupTestResult = this.testDataRowItems(
-            this.dataRowItems, variableContext, undefined, 0,0);
+            this.dataRowItems, variableContext, undefined, 0, 0);
 
         return groupTestResult;
     }
 
     testDataRowItems(dataRowItems, variableContext, variableName, fromValue, toValue) {
-        for(let value=fromValue; value<=toValue; value++){
+        for (let value = fromValue; value <= toValue; value++) {
             if (variableName !== undefined) {
                 // 并不是所有的组都有变量
                 variableContext[variableName] = value;
             }
 
-            for(let idx=0; idx<dataRowItems.length; idx++) {
+            for (let idx = 0; idx < dataRowItems.length; idx++) {
                 let dataRowItem = dataRowItems[idx];
                 let lineIdx = dataRowItem.lineIdx;
 
@@ -212,7 +212,7 @@ class UnitTestController {
                     let dataCellItems = dataRowItem.dataCellItems;
 
                     // 1. 设置输入数据
-                    for(let column = 0; column < this.testPins.length; column++) {
+                    for (let column = 0; column < this.testPins.length; column++) {
                         let testPin = this.testPins[column];
                         if (!testPin.isInput) {
                             continue;
@@ -225,7 +225,7 @@ class UnitTestController {
 
                         if (data === undefined) {
                             throw new ParseException(
-                                'Can not set value "x" to input, port: ' + testPin.name +
+                                'Can not set wildcard "*" to input port, port: ' + testPin.name +
                                 ', at line: ' + (lineIdx + 1));
                         }
 
@@ -236,7 +236,7 @@ class UnitTestController {
                     this.moduleController.step();
 
                     // 3. 检验输出数据
-                    for(let column = 0; column < this.testPins.length; column++) {
+                    for (let column = 0; column < this.testPins.length; column++) {
                         let testPin = this.testPins[column];
                         if (testPin.isInput) {
                             continue;
@@ -266,16 +266,16 @@ class UnitTestController {
                         this.moduleController.step();
                     }
 
-                }else if (dataRowItem.type === DataRowItemType.nop) {
+                } else if (dataRowItem.type === DataRowItemType.nop) {
                     // 空转一次
                     if (this.seqMode === true) {
                         this.moduleController.step();
                         this.moduleController.step();
-                    }else {
+                    } else {
                         this.moduleController.step();
                     }
 
-                }else {
+                } else {
                     // 新的组
                     let groupTestResult = this.testDataRowItems(
                         dataRowItem.childDataRowItems,
@@ -321,7 +321,7 @@ class UnitTestController {
         }
 
         let offset = 0;
-        for(let idx=count-1; idx>=0; idx--) {
+        for (let idx = count - 1; idx >= 0; idx--) {
             let partailBinary = Binary.fromInt32(uint8Array[idx], 8);
             data = data.splice(offset, partailBinary);
         }
@@ -331,7 +331,7 @@ class UnitTestController {
 
     static convertCellDataToBinary(dataCellItemType, cellItemData, bitWidth, lineIdx, variableContext) {
         let binary;
-        switch (dataCellItemType){
+        switch (dataCellItemType) {
             case DataCellItemType.number:
                 {
                     binary = Binary.fromInt32(cellItemData, bitWidth);
@@ -347,9 +347,9 @@ class UnitTestController {
             case DataCellItemType.arithmetic:
                 {
                     let value;
-                    try{
+                    try {
                         value = VariableCalculator.evaluate(cellItemData, variableContext);
-                    }catch{
+                    } catch {
                         throw new ParseException(
                             'Arithmetic syntax error, text: ' + cellItemData +
                             ', at line: ' + (lineIdx + 1));

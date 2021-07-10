@@ -1,6 +1,6 @@
 const AbstractTestPin = require('./abstracttestpin');
 
-const {Binary} = require('jsbinary');
+const { Binary } = require('jsbinary');
 
 class CombinedTestPin extends AbstractTestPin {
     /**
@@ -11,7 +11,7 @@ class CombinedTestPin extends AbstractTestPin {
      */
     constructor(name, isInput, childTestPins) {
         super(name,
-            CombinedTestPin.calculatePinsBitWidth(childTestPins),
+            CombinedTestPin.getPinsBitWidth(childTestPins),
             isInput);
 
         // - childTestPins: [AbstractPortItem, ...] 数组
@@ -24,7 +24,7 @@ class CombinedTestPin extends AbstractTestPin {
     setData(data) {
         let offset = 0;
         // for(let testPin of this.childTestPins) {
-        for(let idx=this.childTestPins.length - 1; idx>=0; idx--){
+        for (let idx = this.childTestPins.length - 1; idx >= 0; idx--) {
             let testPin = this.childTestPins[idx];
             let partialData = data.slice(offset, testPin.bitWidth);
             testPin.setData(partialData);
@@ -36,7 +36,7 @@ class CombinedTestPin extends AbstractTestPin {
         let data = Binary.fromBinaryString('0', this.bitWidth);
         let offset = 0;
         // for(let testPin of this.childTestPins) {
-        for(let idx=this.childTestPins.length - 1; idx>=0; idx--){
+        for (let idx = this.childTestPins.length - 1; idx >= 0; idx--) {
             let testPin = this.childTestPins[idx];
             let partialData = testPin.getData();
             data = data.splice(offset, partialData);
@@ -45,9 +45,9 @@ class CombinedTestPin extends AbstractTestPin {
         return data;
     }
 
-    getPinsBitWidth(testPins) {
+    static getPinsBitWidth(testPins) {
         let bitWidth = 0;
-        for(let testPin of testPins) {
+        for (let testPin of testPins) {
             bitWidth += testPin.bitWidth;
         }
         return bitWidth;
