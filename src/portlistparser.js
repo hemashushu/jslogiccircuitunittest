@@ -1,4 +1,6 @@
-const { ParseException } = require('jsexception');
+const ScriptParseException = require('./scriptparseexception');
+const ParseErrorDetail = require('./parseerrordetail');
+const ParseErrorCode = require('./parseerrorcode');
 
 const { BitRange } = require('jslogiccircuit');
 
@@ -46,7 +48,7 @@ class PortListParser {
      * - 不支持拼接后再部分选取，比如：
      *   {A, B}[14:12] **不支持**
      *
-     * - 如果端口列表语法有误，会抛出 ParseException 异常。
+     * - 如果端口列表语法有误，会抛出 ScriptParseException 异常。
      *
      * @param {*} lineIdx
      * @param {*} lineText
@@ -144,8 +146,11 @@ class PortListParser {
                             idx = lineText.length;
                             break; // 遇到注释字符，需要退出 for 循环
                         } else {
-                            throw new ParseException('Expect space between port names, at line: ' + (lineIdx + 1) +
-                                ', position: ' + (idx + 1));
+                            throw new ScriptParseException(
+                                'Expect space or new port name',
+                                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                                    'expect-space-or-new-port-name',
+                                    lineIdx, idx));
                         }
                         break;
                     }
@@ -178,9 +183,11 @@ class PortListParser {
                             idx = lineText.length;
                             break; // 遇到注释字符，需要退出 for 循环
                         } else {
-                            throw new ParseException(
-                                'Expect port name start, at line: ' + (lineIdx + 1) +
-                                ', position: ' + (idx + 1));
+                            throw new ScriptParseException(
+                                'Expect space between port names',
+                                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                                    'expect-space-between-port-names',
+                                    lineIdx, idx));
                         }
                         break;
                     }
@@ -207,8 +214,11 @@ class PortListParser {
             state === 'expect-next-port-or-sub-port-start-or-square-bracket-start') {
             //
         } else {
-            throw new ParseException(
-                'Port list syntax error, at line: ' + (lineIdx + 1));
+            throw new ScriptParseException(
+                'Port name list syntax error',
+                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                    'port-name-list-syntax-error',
+                    lineIdx));
         }
 
         let portItems = portTexts.map(portText => {
@@ -218,8 +228,13 @@ class PortListParser {
         // 检查端口语法
         for (let portItem of portItems) {
             if (!portItem.isValid()) {
-                throw new ParseException(
-                    'Port name syntax error, text: "' + portItem.getTitle() + '"');
+                throw new ScriptParseException(
+                    'Invalid port name',
+                    new ParseErrorDetail(ParseErrorCode.invalidPortName,
+                        'invalid-port-name',
+                        undefined, undefined, {
+                            text: portItem.getTitle()
+                        }));
             }
         }
 
@@ -333,8 +348,13 @@ class PortListParser {
                             portTextBuffer = [];
                             state = 'expect-port-start';
                         } else {
-                            throw new ParseException(
-                                'Port name syntax error, text: "' + portText + '", at position: ' + (idx + 1));
+                            throw new ScriptParseException(
+                                'Combined port name syntax error',
+                                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                                    'combined-port-name-syntax-error',
+                                    lineIdx, undefined, {
+                                        text: portText
+                                    }));
                         }
                         break;
                     }
@@ -361,7 +381,13 @@ class PortListParser {
             state === 'expect-comma-or-sub-port-start-or-square-bracket-start') {
             //
         } else {
-            throw new ParseException('Port name syntax error, text: "' + portText + '"');
+            throw new ScriptParseException(
+                'Combined port name syntax error',
+                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                    'combined-port-name-syntax-error',
+                    undefined, undefined, {
+                        text: portText
+                    }));
         }
 
         // 花括号里提取出来的端口名称可能包含有前后空格

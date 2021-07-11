@@ -1,4 +1,6 @@
-const { ParseException } = require('jsexception');
+const ScriptParseException = require('./scriptparseexception');
+const ParseErrorDetail = require('./parseerrordetail');
+const ParseErrorCode = require('./parseerrorcode');
 
 class FrontMatterParser {
     /**
@@ -22,16 +24,20 @@ class FrontMatterParser {
      *
      * 其中字符串的双引号在无歧义的情况下可以省略。
      *
+     * 如果有语法错误，如缺少冒号，双引号不成双等，则抛出 ScriptParseException 异常。
+     *
      * @param {*} lineIdx
      * @param {*} lineText 头信息文本的单一行内容
-     * @returns {key:..., value:...} 对象。如果有语法错误，如
-     *     缺少冒号，双引号不成双等，则抛出 ParseException 异常。
+     * @returns {key:..., value:...} 对象。
      */
     static parseLine(lineIdx, lineText) {
         let pos = lineText.indexOf(':');
         if (pos <= 0) {
-            throw new ParseException(
-                'Front-Matter syntax error, at line: ' + (lineIdx + 1));
+            throw new ScriptParseException(
+                'Missing the colon in front-matter line',
+                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                    'missing-colon-in-front-matter-line',
+                    lineIdx));
         }
 
         let key = lineText.substring(0, pos).trim(); // 去除头尾空格
@@ -45,8 +51,11 @@ class FrontMatterParser {
             // 寻找双引号结束的位置
             let quotePos = valueString.indexOf('"', 1);
             if (quotePos < 0) {
-                throw new ParseException(
-                    'The ending quote was not found in the value of the Front-Matter field, at line: ' + (lineIdx + 1));
+                throw new ScriptParseException(
+                    'Can not find the ending quote in front-matter line',
+                    new ParseErrorDetail(ParseErrorCode.syntaxError,
+                        'no-ending-quote-in-front-matter-line',
+                        lineIdx));
             }
 
             value = valueString.substring(1, quotePos);

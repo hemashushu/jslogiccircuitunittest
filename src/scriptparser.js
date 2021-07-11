@@ -3,7 +3,9 @@ const path = require('path');
 const { PromiseTextFile } = require('jstextfile');
 const { ObjectUtils } = require('jsobjectutils');
 
-const { ParseException } = require('jsexception');
+const ScriptParseException = require('./scriptparseexception');
+const ParseErrorDetail = require('./parseerrordetail');
+const ParseErrorCode = require('./parseerrorcode');
 
 const DataRowParser = require('./datarowparser');
 const DataRowItem = require('./datarowitem');
@@ -27,7 +29,7 @@ class TestScriptParser {
      * @param {*} scriptName
      * @param {*} textContent
      * @returns ScriptItem 对象，如果脚本有语法错误，会抛出
-     *     ParseException 异常。
+     *     ScriptParseException 异常。
      */
     static parse(scriptName, textContent) {
         let frontMatterItems = []; // [{key:..., value:...},...]
@@ -55,8 +57,10 @@ class TestScriptParser {
 
         let leaveGroup = (lineIdx) => {
             if (dataRowItemStack.length <= 1) {
-                throw new ParseException(
-                    'Exceeded "for" statement, at line: ' + (lineIdx + 1));
+                throw new ScriptParseException(
+                    'Can not find the corresponding for statement',
+                    new ParseErrorDetail(ParseErrorCode.syntaxError,
+                        'statement-end-syntax-error', lineIdx));
             }
             dataRowItemStack.pop();
             currentGroup = dataRowItemStack[dataRowItemStack.length - 1];

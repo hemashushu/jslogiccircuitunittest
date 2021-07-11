@@ -1,22 +1,20 @@
-const { ParseException } = require('jsexception');
+const ScriptParseException = require('./scriptparseexception');
+const ParseErrorDetail = require('./parseerrordetail');
+const ParseErrorCode = require('./parseerrorcode');
+
 const { Binary } = require('jsbinary');
 
 const { VariableCalculator } = require('jsvariablecalculator');
 
-const { AbstractLogicModule,
-    ModuleController,
+const { ModuleController,
     LogicModuleFactory } = require('jslogiccircuit');
 
 const PortItem = require('./portitem');
 const SlicePortItem = require('./sliceportitem');
-const CombinedPortItem = require('./combinedportitem');
-
 const TestPin = require('./testpin');
 const SliceTestPin = require('./slicetestpin');
 const CombinedTestPin = require('./combinedtestpin');
-
 const DataRowItemType = require('./datarowitemtype');
-const DataCellItem = require('./datacellitem');
 const DataCellItemType = require('./datacellitemtype');
 const TestResult = require('./testresult');
 
@@ -25,7 +23,8 @@ class UnitTestController {
      * 构造测试控制器
      *
      * - 需要先把待测试模块的逻辑包（及其逻辑模块）加载
-     * - 如果端口列表指定的端口或者子模块找不到，则抛出 ParseException 异常。
+     * - 如果逻辑包或者逻辑模块找不到，则抛出 IllegalArgumentException 异常。
+     * - 如果**脚本里的**端口列表指定的端口或者子模块找不到，则抛出 ScriptParseException 异常。
      *
      * @param {*} packageName
      * @param {*} moduleClassName
@@ -66,7 +65,7 @@ class UnitTestController {
      * @param {*} logicModule
      * @param {*} portItems
      * @returns AbstractTestPin 对象数组，如果端口列表指定的
-     *     端口或者子模块找不到，则抛出 ParseException 异常。
+     *     端口或者子模块找不到，则抛出 ScriptParseException 异常。
      */
     generateTestPins(logicModule, portItems) {
         let testPins = [];
@@ -124,7 +123,7 @@ class UnitTestController {
      * @param {*} logicModule
      * @param {*} namePath
      * @returns {pin:Pin, canTestInput:Boolean} 对象，如果端口列表指定的
-     *     端口或者子模块找不到，则抛出 ParseException 异常。
+     *     端口或者子模块找不到，则抛出 ScriptParseException 异常。
      */
     getPinByNamePath(logicModule, namePath) {
         let canTestInput = true;
@@ -144,9 +143,20 @@ class UnitTestController {
         let targetLogicModule = logicModule;
         for (let idx = 0; idx < names.length - 1; idx++) {
             let logicModuleName = names[idx];
-            targetLogicModule = targetLogicModule.getLogicModule(logicModuleName);
+
+            if (typeof targetLogicModule.getLogicModule === 'function') {
+                targetLogicModule = targetLogicModule.getLogicModule(logicModuleName);
+            } else {
+                targetLogicModule = undefined;
+            }
+
             if (targetLogicModule === undefined) {
-                throw new ParseException('Can not found the module: ' + logicModuleName);
+                throw new ScriptParseException(
+                    'Can not found the specified module',
+                    new ParseErrorDetail(ParseErrorCode.moduleNotFound,
+                        'module-not-found', undefined, undefined, {
+                        moduleName: logicModuleName
+                    }));
             }
         }
 
@@ -170,15 +180,20 @@ class UnitTestController {
             };
         }
 
-        throw new ParseException('Can not found the port: ' + namePath);
+        throw new ScriptParseException(
+            'Can not found the specified port',
+            new ParseErrorDetail(ParseErrorCode.portNotFound,
+                'port-not-found', undefined, undefined, {
+                portName: namePath
+            }));
     }
 
 
     /**
      *
      * - 如果模块存在振荡，则抛出 OscillatingException 异常。
-     * - 如果测试脚本存在错误（一般语法错误在加载脚本时已经检测，这里一般是因为
-     *   算术表达式引起的错误），则返回 {pass: false, lineIdx: Number}
+     * - 如果测试脚本存在错误（一般语法错误在加载脚本时已经检测，这里是因为
+     *   算术表达式引起的错误），则抛出 ScriptParseException 异常。
      *
      * @returns {pass, lineIdx}，
      *     - 如果测试通过，则返回 {pass: true}，
@@ -224,9 +239,12 @@ class UnitTestController {
                             lineIdx, variableContext);
 
                         if (data === undefined) {
-                            throw new ParseException(
-                                'Can not set wildcard "*" to input port, port: ' + testPin.name +
-                                ', at line: ' + (lineIdx + 1));
+                            throw new ScriptParseException(
+                                'Cannot set wildcard asterisk to input port',
+                                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                                    'wildcard-asterisk-syntax-error', lineIdx, undefined, {
+                                    portName: testPin.name
+                                }));
                         }
 
                         testPin.setData(data);
@@ -350,15 +368,21 @@ class UnitTestController {
                     try {
                         value = VariableCalculator.evaluate(cellItemData, variableContext);
                     } catch {
-                        throw new ParseException(
-                            'Arithmetic syntax error, text: ' + cellItemData +
-                            ', at line: ' + (lineIdx + 1));
+                        throw new ScriptParseException(
+                            'Arithmetic syntax error',
+                            new ParseErrorDetail(ParseErrorCode.syntaxError,
+                                'arithmetic-syntax-error', lineIdx, undefined, {
+                                text: cellItemData
+                            }));
                     }
 
                     if (isNaN(value)) {
-                        throw new ParseException(
-                            'Evaluate arithmetic error, text: ' + cellItemData +
-                            ', at line: ' + (lineIdx + 1));
+                        throw new ScriptParseException(
+                            'Arithmetic evaluating error',
+                            new ParseErrorDetail(ParseErrorCode.evaluateError,
+                                'arithmetic-evaluating-error', lineIdx, undefined, {
+                                text: cellItemData
+                            }));
                     }
 
                     binary = Binary.fromInt32(value, bitWidth);

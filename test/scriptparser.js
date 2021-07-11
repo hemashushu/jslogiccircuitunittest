@@ -5,6 +5,8 @@ const { ObjectUtils } = require('jsobjectutils');
 const { BitRange } = require('jslogiccircuit');
 
 const {
+    ScriptParseException,
+    ParseErrorCode,
     ScriptParser,
     FrontMatterParser,
     PortListParser,
@@ -58,17 +60,23 @@ describe('ScriptParse test', () => {
 
         it('Test exception', () => {
             try {
-                FrontMatterParser.parseLine('string with no ending quote: "Hello! World');
-                fail();
-            } catch (ParseException) {
-                //
+                FrontMatterParser.parseLine(0, 'string with no ending quote: "Hello! World');
+                assert.fail();
+            } catch (e) {
+                assert(e instanceof ScriptParseException);
+                assert.equal(e.parseErrorDetail.code, ParseErrorCode.syntaxError);
+                assert.equal(e.parseErrorDetail.messageId, 'no-ending-quote-in-front-matter-line');
+                assert.equal(e.parseErrorDetail.lineIdx, 0);
             }
 
             try {
-                FrontMatterParser.parseLine('no colon');
-                fail();
-            } catch (ParseException) {
-                //
+                FrontMatterParser.parseLine(0, 'no colon');
+                assert.fail();
+            } catch (e) {
+                assert(e instanceof ScriptParseException);
+                assert.equal(e.parseErrorDetail.code, ParseErrorCode.syntaxError);
+                assert.equal(e.parseErrorDetail.messageId, 'missing-colon-in-front-matter-line');
+                assert.equal(e.parseErrorDetail.lineIdx, 0);
             }
         });
     });
@@ -197,34 +205,75 @@ describe('ScriptParse test', () => {
         it('Test exception', () => {
             try {
                 PortListParser.parse(0, 'A.');
-                fail();
-            } catch (ParseException) {
-                //
+                assert.fail();
+            } catch (e) {
+                assert(e instanceof ScriptParseException);
+                assert.equal(e.parseErrorDetail.code, ParseErrorCode.syntaxError);
+                assert.equal(e.parseErrorDetail.messageId, 'port-name-list-syntax-error');
+            }
+
+            try {
+                PortListParser.parse(0, 'Q A~B');
+                assert.fail();
+            } catch (e) {
+                assert.equal(e.parseErrorDetail.messageId, 'invalid-port-name');
+                assert.equal(e.parseErrorDetail.data.text, 'A~B');
+            }
+
+            try {
+                PortListParser.parse(0, 'A[4:0]B');
+                assert.fail();
+            } catch (e) {
+                assert.equal(e.parseErrorDetail.messageId, 'expect-space-or-new-port-name');
+                assert.equal(e.parseErrorDetail.columnIdx, 6);
+            }
+
+            try {
+                PortListParser.parse(0, '{A}B');
+                assert.fail();
+            } catch (e) {
+                assert.equal(e.parseErrorDetail.messageId, 'expect-space-or-new-port-name');
+                assert.equal(e.parseErrorDetail.columnIdx, 3);
+            }
+
+            try {
+                PortListParser.parse(0, '"A"B');
+                assert.fail();
+            } catch (e) {
+                assert.equal(e.parseErrorDetail.messageId, 'expect-space-between-port-names');
+                assert.equal(e.parseErrorDetail.columnIdx, 3);
             }
 
             try {
                 PortListParser.parse(0, 'A[2');
-            } catch (ParseException) {
-                //
+                assert.fail();
+            } catch (e) {
+                assert.equal(e.parseErrorDetail.messageId, 'port-name-list-syntax-error');
             }
 
             try {
                 PortListParser.parse(0, '{A');
-            } catch (ParseException) {
-                //
+                assert.fail();
+            } catch (e) {
+                assert.equal(e.parseErrorDetail.messageId, 'port-name-list-syntax-error');
             }
 
             try {
                 PortListParser.parse(0, '{B A.}');
-            } catch (ParseException) {
-                //
+                assert.fail();
+            } catch (e) {
+                assert.equal(e.parseErrorDetail.messageId, 'combined-port-name-syntax-error');
             }
 
             try {
-                PortListParser.parse(0, '{B A[2]}');
-            } catch (ParseException) {
-                //
+                PortListParser.parse(0, '{B A}[7:0]');
+                assert.fail();
+            } catch (e) {
+                assert.equal(e.parseErrorDetail.messageId, 'expect-space-or-new-port-name');
+                assert.equal(e.parseErrorDetail.columnIdx, 5);
             }
+
+
         });
     });
 

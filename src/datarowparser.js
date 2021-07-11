@@ -1,4 +1,6 @@
-const { ParseException } = require('jsexception');
+const ScriptParseException = require('./scriptparseexception');
+const ParseErrorDetail = require('./parseerrordetail');
+const ParseErrorCode = require('./parseerrorcode');
 
 const DataRowItem = require('./datarowitem');
 const DataRowItemType = require('./datarowitemtype');
@@ -7,24 +9,30 @@ const DataCellItemType = require('./datacellitemtype');
 
 class DataRowParser {
 
+    /**
+     * 如果数据行有语法错误，则抛出 ScriptParseException 异常。
+     *
+     * @param {*} lineIdx
+     * @param {*} lineText
+     * @returns {
+     *     dataRowItem: DataRowItem,
+     *     isEnterGroup: Boolean,
+     *     isLeaveGroup: Boolean} 对象
+     */
     static parseLine(lineIdx, lineText) {
         if (/^\s*nop(\s*$|\s*#.*$)/.test(lineText)) {
             // parse 'nop'
             let nopDataRowItem = DataRowParser.parseNopRow(lineIdx, lineText);
-            // appendDataRowItem(nopDataRow);
             return { dataRowItem: nopDataRowItem };
 
         } else if (/^\s*repeat\s*\(/.test(lineText)) {
             // parse 'repeat'
             let repeatDataRowItem = DataRowParser.parseRepeatRow(lineIdx, lineText);
-            // appendDataRowItem(repeatDataRow);
             return { dataRowItem: repeatDataRowItem };
 
         } else if (/^\s*for\s*\(/.test(lineText)) {
             // parse 'for'
             let forDataRowItem = DataRowParser.parseForRow(lineIdx, lineText);
-            // appendDataRowItem(forDataRow);
-            // enterGroup(forDataRow);
             return {
                 dataRowItem: forDataRowItem,
                 isEnterGroup: true
@@ -32,7 +40,6 @@ class DataRowParser {
 
         } else if (/^\s*end(\s*$|\s*#.*$)/.test(lineText)) {
             // 跳出当前组
-            // leaveGroup(lineIdx);
             return {
                 isLeaveGroup: true
             };
@@ -40,7 +47,6 @@ class DataRowParser {
         } else {
             // parse normal data row
             let dataRowItem = DataRowParser.parseDataRow(lineIdx, lineText);
-            // appendDataRowItem(dataRow);
             return {
                 dataRowItem: dataRowItem
             };
@@ -53,7 +59,7 @@ class DataRowParser {
      * @param {*} lineIdx
      * @param {*} rowText
      * @returns DataRowItem 对象，如果数据行有语法错误，则
-     *     抛出 ParseException 异常。
+     *     抛出 ScriptParseException 异常。
      */
     static parseDataRow(lineIdx, rowText) {
         // 数据行有可能几种数据：
@@ -153,9 +159,11 @@ class DataRowParser {
                         if (c === ' ') {
                             state = 'expect-cell-start';
                         } else {
-                            throw new ParseException(
-                                'Expect space between data cells, at line: ' + (lineIdx + 1) +
-                                ', position: ' + (idx + 1));
+                            throw new ScriptParseException(
+                                'Expect space between data cells.',
+                                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                                    'expect-space-between-data-cells',
+                                    lineIdx, idx));
                         }
                         break;
                     }
@@ -170,8 +178,11 @@ class DataRowParser {
             state === 'expect-space') {
             //
         } else {
-            throw new ParseException(
-                'Data row syntax error, at line: ' + (lineIdx + 1));
+            throw new ScriptParseException(
+                'Data row syntax error',
+                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                    'data-row-syntax-error',
+                    lineIdx));
         }
 
         let dataCellItems = [];
@@ -199,8 +210,10 @@ class DataRowParser {
 
         let match = /^\s*repeat\s*\(\s*(\d+)\s*(,\s*([a-z][a-z0-9_]*)\s*)?\)\s+(.+)$/.exec(rowText);
         if (match === null) {
-            throw new ParseException(
-                'Data row syntax error, statement: "repeat", at line: ' + (lineIdx + 1));
+            throw new ScriptParseException(
+                'Data row statement "repeat" syntax error',
+                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                    'statement-repeat-syntax-error', lineIdx));
         }
 
         let repeatCount = Number(match[1]);
@@ -217,8 +230,10 @@ class DataRowParser {
         } = DataRowParser.parseLine(lineIdx, subDataRowText);
 
         if (isEnterGroup || isLeaveGroup) {
-            throw new ParseException(
-                'Data row syntax error, statement: "repeat", at line: ' + (lineIdx + 1));
+            throw new ScriptParseException(
+                'Data row statement "repeat" syntax error',
+                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                    'statement-repeat-syntax-error', lineIdx));
         }
 
         // 生成一个 childDataRowItems 属性值为单一条 DataRowItem 的
@@ -251,8 +266,10 @@ class DataRowParser {
 
         let match = /^for\s*\(\s*([a-z][a-z0-9_]*)\s*,\s*([\d_]+|0b[01_]+|0x[0-9a-f_]+)\s*,\s*([\d_]+|0b[01_]+|0x[0-9a-f_]+)\s*\)$/.exec(rowText);
         if (match === null) {
-            throw new ParseException(
-                'Data row syntax error, statement: "for", at line: ' + (lineIdx + 1));
+            throw new ScriptParseException(
+                'Data row statement "for" syntax error',
+                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                    'statement-for-syntax-error', lineIdx));
         }
 
         let variableName = match[1].trim();
@@ -307,8 +324,12 @@ class DataRowParser {
     static convertToNumberDataCellItem(lineIdx, cellTextContent) {
         let number = Number(cellTextContent);
         if (isNaN(number)) {
-            throw new ParseException('Can not convert to number, text: "' + cellTextContent + '"' +
-                ', at line: ' + (lineIdx + 1));
+            throw new ScriptParseException(
+                'Number syntax error in data row',
+                new ParseErrorDetail(ParseErrorCode.syntaxError,
+                    'number-syntax-error', lineIdx, undefined, {
+                        text: cellTextContent
+                    }));
         }
         return new DataCellItem(DataCellItemType.number, number);
     }

@@ -1,9 +1,13 @@
 const path = require('path');
+const { IllegalArgumentException } = require('jsexception');
 
 const { LogicPackageLoader } = require('jslogiccircuit');
 
 const { UnitTestController,
-    ScriptParser } = require('../index');
+    ScriptParser,
+    ScriptParseException,
+    ParseErrorCode
+} = require('../index');
 
 const assert = require('assert/strict');
 
@@ -95,6 +99,66 @@ describe('UnitTestController Test', () => {
     });
 
     describe('Test fail', () => {
+        it('Test construct error cause of package not found', () => {
+            let scriptItem1 = ScriptParser.parse('OR gate test',
+                'A B Q\n' +
+                '0 0 0');
+
+            try {
+                let unitTestController1 = new UnitTestController(
+                    'no-this-package', 'or_gate', scriptItem1);
+                assert.fail();
+            } catch (e) {
+                assert(e instanceof IllegalArgumentException);
+            }
+        });
+
+        it('Test construct error cause of module not found', () => {
+            let scriptItem1 = ScriptParser.parse('OR gate test',
+                'A B Q\n' +
+                '0 0 0');
+
+            try {
+                let unitTestController1 = new UnitTestController(
+                    'sample_logic_package_by_code', 'or_gate_ext', scriptItem1);
+                assert.fail();
+            } catch (e) {
+                assert(e instanceof IllegalArgumentException);
+            }
+        });
+
+        it('Test module in port list not found error', () => {
+            let scriptItem1 = ScriptParser.parse('OR gate test',
+                'A subModule.B Q\n' + // <-- not module named 'subModule'
+                '0 0 0');
+
+            try {
+                let unitTestController1 = new UnitTestController(
+                    'sample_logic_package_by_code', 'or_gate', scriptItem1);
+                assert.fail();
+            } catch (e) {
+                assert(e instanceof ScriptParseException);
+                assert.equal(e.parseErrorDetail.code, ParseErrorCode.moduleNotFound);
+                assert.equal(e.parseErrorDetail.data.moduleName, 'subModule');
+            }
+        });
+
+        it('Test port in port list not found error', () => {
+            let scriptItem1 = ScriptParser.parse('OR gate test',
+                'A B Out\n' + // <-- no port named 'Out'
+                '0 0 0');
+
+            try {
+                new UnitTestController(
+                    'sample_logic_package_by_code', 'or_gate', scriptItem1);
+                assert.fail();
+            } catch (e) {
+                assert(e instanceof ScriptParseException);
+                assert.equal(e.parseErrorDetail.code, ParseErrorCode.portNotFound);
+                assert.equal(e.parseErrorDetail.data.portName, 'Out');
+            }
+        });
+
         it('Test check error', () => {
             let scriptItem1 = ScriptParser.parse('OR gate test',
                 'A B Q\n' +
@@ -158,13 +222,40 @@ describe('UnitTestController Test', () => {
 
             try {
                 unitTestController1.test();
-                fail();
+                assert.fail();
             } catch (e) {
-                // check the error code
+                assert(e instanceof ScriptParseException);
+                assert.equal(e.parseErrorDetail.code, ParseErrorCode.syntaxError);
+                assert.equal(e.parseErrorDetail.messageId, 'wildcard-asterisk-syntax-error');
+                assert.equal(e.parseErrorDetail.lineIdx, 2);
+                assert.equal(e.parseErrorDetail.data.portName, 'A');
             }
         });
 
         it('Test arithmetic syntax error', () => {
+            let scriptItem1 = ScriptParser.parse('OR gate test',
+                'A B Q\n' +
+                '0 0 0\n' +
+                '0 1 1\n' +
+                '1 0 (1++1)\n' + // <-- line idx 3 arithmetic syntax error
+                '1 1 1');
+
+            let unitTestController1 = new UnitTestController(
+                'sample_logic_package_by_code', 'or_gate', scriptItem1);
+
+            try {
+                unitTestController1.test();
+                assert.fail();
+            } catch (e) {
+                assert(e instanceof ScriptParseException);
+                assert.equal(e.parseErrorDetail.code, ParseErrorCode.syntaxError);
+                assert.equal(e.parseErrorDetail.messageId, 'arithmetic-syntax-error');
+                assert.equal(e.parseErrorDetail.lineIdx, 3);
+                assert.equal(e.parseErrorDetail.data.text, '1++1');
+            }
+        });
+
+        it('Test arithmetic evaluate error', () => {
             let scriptItem1 = ScriptParser.parse('OR gate test',
                 'A B Q\n' +
                 '0 0 0\n' +
@@ -177,9 +268,13 @@ describe('UnitTestController Test', () => {
 
             try {
                 unitTestController1.test();
-                fail();
+                assert.fail();
             } catch (e) {
-                // check the error code
+                assert(e instanceof ScriptParseException);
+                assert.equal(e.parseErrorDetail.code, ParseErrorCode.evaluateError);
+                assert.equal(e.parseErrorDetail.messageId, 'arithmetic-evaluating-error');
+                assert.equal(e.parseErrorDetail.lineIdx, 2);
+                assert.equal(e.parseErrorDetail.data.text, 'a+b');
             }
         });
     });
