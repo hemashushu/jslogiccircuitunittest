@@ -287,7 +287,7 @@ class DataRowParser {
     }
 
     /**
-     * 如果单元格数据格式有错误，会抛出 ParseException 异常。
+     * 如果单元格数据格式有错误，会抛出 ScriptParseException 异常。
      * 注意算术表达式需要在测试过程中才检查是否有语法有误。
      *
      * @param {*} lineIdx
@@ -315,7 +315,7 @@ class DataRowParser {
     }
 
     /**
-     * 如果数字格式错误，会抛出 ParseException 异常。
+     * 如果数字格式错误，会抛出 ScriptParseException 异常。
      *
      * @param {*} lineIdx
      * @param {*} cellTextContent

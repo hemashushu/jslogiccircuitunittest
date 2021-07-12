@@ -23,11 +23,13 @@
     },
     "homepage": "https://github.com/hemashushu/jslogiccircuitunittest",
     "devDependencies": {
-        "jsexception": "github:hemashushu/jsexception",
         "mocha": "^8.3.2"
     },
     "dependencies": {
         "jsbinary": "github:hemashushu/jsbinary",
+        "jsexception": "github:hemashushu/jsexception",
+        "jsfileconfig": "github:hemashushu/jsfileconfig",
+        "jsfileutils": "github:hemashushu/jsfileutils",
         "jslogiccircuit": "github:hemashushu/jslogiccircuit",
         "jsobjectutils": "github:hemashushu/jsobjectutils",
         "jstextfile": "github:hemashushu/jstextfile",

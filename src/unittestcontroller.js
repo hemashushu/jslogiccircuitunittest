@@ -9,6 +9,8 @@ const { VariableCalculator } = require('jsvariablecalculator');
 const { ModuleController,
     LogicModuleFactory } = require('jslogiccircuit');
 
+const {LocaleProperty } = require('jsfileconfig');
+
 const PortItem = require('./portitem');
 const SlicePortItem = require('./sliceportitem');
 const TestPin = require('./testpin');
@@ -17,6 +19,7 @@ const CombinedTestPin = require('./combinedtestpin');
 const DataRowItemType = require('./datarowitemtype');
 const DataCellItemType = require('./datacellitemtype');
 const TestResult = require('./testresult');
+const UnitTestResult = require('./unittestresult');
 
 class UnitTestController {
     /**
@@ -29,13 +32,16 @@ class UnitTestController {
      * @param {*} packageName
      * @param {*} moduleClassName
      * @param {*} scriptItem
+     * @param {*} localeCode 诸如 'en', 'zh-CN', 'jp' 等本地化语言代码。
      */
-    constructor(packageName, moduleClassName, scriptItem) {
+    constructor(packageName, moduleClassName, scriptItem, localeCode = 'en') {
         this.scriptName = scriptItem.name;
-        this.dataRowItems = scriptItem.dataRowItems;
+        this.scriptFilePath = scriptItem.scriptFilePath;
 
         // 获取测试脚本的头信息（Front-Matter）
         let frontMatter = scriptItem.frontMatter;
+
+        this.title = LocaleProperty.getValue(frontMatter, '!title', localeCode);
 
         // 时序模式标记
         this.seqMode = (frontMatter['!seq'] === true);
@@ -58,6 +64,9 @@ class UnitTestController {
 
         // 模块控制器（运行器）
         this.moduleController = new ModuleController(logicModule);
+
+        // 待测试的数据
+        this.dataRowItems = scriptItem.dataRowItems;
     }
 
     /**
@@ -195,11 +204,7 @@ class UnitTestController {
      * - 如果测试脚本存在错误（一般语法错误在加载脚本时已经检测，这里是因为
      *   算术表达式引起的错误），则抛出 ScriptParseException 异常。
      *
-     * @returns {pass, lineIdx}，
-     *     - 如果测试通过，则返回 {pass: true}，
-     *     - 如果测试不通过，则返回 {pass: false,
-     *           lineIdx: Number, portName: String,
-     *           expect: Binary, actual: Binary}
+     * @returns
      */
 
     test() {
@@ -207,9 +212,24 @@ class UnitTestController {
         let groupTestResult = this.testDataRowItems(
             this.dataRowItems, variableContext, undefined, 0, 0);
 
-        return groupTestResult;
+        return new UnitTestResult(
+            this.scriptName, this.scriptFilePath,
+            this.title, groupTestResult);
     }
 
+    /**
+     *
+     * @param {*} dataRowItems
+     * @param {*} variableContext
+     * @param {*} variableName
+     * @param {*} fromValue
+     * @param {*} toValue
+     * @returns TestResult. 对象的结构为： {pass, lineIdx}
+     *     - 如果测试通过，则返回 {pass: true}，
+     *     - 如果测试不通过，则返回 {pass: false,
+     *           lineIdx: Number, portName: String,
+     *           expect: Binary, actual: Binary}
+     */
     testDataRowItems(dataRowItems, variableContext, variableName, fromValue, toValue) {
         for (let value = fromValue; value <= toValue; value++) {
             if (variableName !== undefined) {

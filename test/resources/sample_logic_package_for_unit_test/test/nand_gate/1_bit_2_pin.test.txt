@@ -1,0 +1,11 @@
+---
+!title: 1-Bit-2-Pin Nand Gate Unit Test
+!title[zh-CN]: 1位2端口与非门单元测试
+bitWidth: 1
+inputPinCount: 2
+---
+in0 in1 out
+0   0   1
+0   1   1
+1   0   1
+1   1   0

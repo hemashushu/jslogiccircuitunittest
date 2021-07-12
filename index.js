@@ -6,6 +6,7 @@ const DataRowItem = require('./src/datarowitem');
 const DataRowItemType = require('./src/datarowitemtype');
 const DataRowParser = require('./src/datarowparser');
 const FrontMatterParser = require('./src/frontmatterparser');
+const ModuleUnitTestController = require('./src/moduleunittestcontroller');
 const ParseErrorCode = require('./src/parseerrorcode');
 const ParseErrorDetail = require('./src/parseerrordetail');
 const PortItem = require('./src/portitem');
@@ -27,6 +28,7 @@ module.exports = {
     DataRowItemType: DataRowItemType,
     DataRowParser: DataRowParser,
     FrontMatterParser: FrontMatterParser,
+    ModuleUnitTestController: ModuleUnitTestController,
     ParseErrorCode: ParseErrorCode,
     ParseErrorDetail: ParseErrorDetail,
     PortItem: PortItem,

@@ -14,24 +14,30 @@ const PortListParser = require('./portlistparser');
 const FrontMatterParser = require('./frontmatterparser');
 const ScriptItem = require('./scriptitem');
 
-class TestScriptParser {
+const SCRIPT_FILE_EXTENSION_NAME = '.test.txt';
+
+class ScriptParser {
     static async parseFile(filePath) {
         let fileName = path.basename(filePath);
-        let extName = path.extname(fileName);
-        let scriptName = fileName.substring(0, fileName.length - extName.length);
+        let scriptName = fileName;
+
+        if (fileName.endsWith(SCRIPT_FILE_EXTENSION_NAME)){
+            scriptName = fileName.substring(0, fileName.length - SCRIPT_FILE_EXTENSION_NAME.length);
+        }
 
         let { textContent } = await PromiseTextFile.read(filePath);
-        return TestScriptParser.parse(scriptName, textContent);
+        return ScriptParser.parse(textContent, scriptName, filePath);
     }
 
     /**
      *
-     * @param {*} scriptName
      * @param {*} textContent
+     * @param {*} scriptName 脚本的名称，可选
+     * @param {*} scriptFilePath 脚本的本地文件路径，可选
      * @returns ScriptItem 对象，如果脚本有语法错误，会抛出
      *     ScriptParseException 异常。
      */
-    static parse(scriptName, textContent) {
+    static parse(textContent, scriptName, scriptFilePath) {
         let frontMatterItems = []; // [{key:..., value:...},...]
         let portItems;
 
@@ -139,10 +145,12 @@ class TestScriptParser {
 
         let frontMatter = ObjectUtils.collapseKeyValueArray(frontMatterItems, 'key', 'value');
 
-        let scriptItem = new ScriptItem(scriptName, frontMatter,
+        let scriptItem = new ScriptItem(scriptName,
+            scriptFilePath,
+            frontMatter,
             portItems, rootDataRowItem.childDataRowItems);
         return scriptItem;
     }
 }
 
-module.exports = TestScriptParser;
+module.exports = ScriptParser;

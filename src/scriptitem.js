@@ -1,6 +1,7 @@
 class ScriptItem {
-    constructor(name, frontMatter = {}, portItems = [], dataRowItems = []) {
+    constructor(name, scriptFilePath, frontMatter = {}, portItems = [], dataRowItems = []) {
         this.name = name;
+        this.scriptFilePath = scriptFilePath;
         this.frontMatter = frontMatter;
         this.portItems = portItems;
         this.dataRowItems = dataRowItems;

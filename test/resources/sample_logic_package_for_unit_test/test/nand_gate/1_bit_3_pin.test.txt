@@ -1,0 +1,14 @@
+---
+!title: 1-Bit-3-Pin Nand Gate Unit Test
+bitWidth: 1
+inputPinCount: 3
+---
+in0 in1 in2 out
+0   0   0   1
+0   0   1   1
+0   1   0   1
+0   1   1   1
+1   0   0   1
+1   0   1   1
+1   1   0   1
+1   1   1   0

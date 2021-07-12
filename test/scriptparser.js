@@ -324,7 +324,7 @@ describe('ScriptParse test', () => {
                 'nop # rem1\n' +
                 '1 1 1';
 
-            let scriptItem = ScriptParser.parse('test', textContent);
+            let scriptItem = ScriptParser.parse(textContent);
             let dataRowItems = scriptItem.dataRowItems;
             assert.equal(dataRowItems.length, 4);
 
@@ -348,7 +348,7 @@ describe('ScriptParse test', () => {
                 'repeat(5) nop\n' +
                 ' 1 1 1';
 
-            let scriptItem = ScriptParser.parse('test', textContent);
+            let scriptItem = ScriptParser.parse(textContent);
             let dataRowItems = scriptItem.dataRowItems;
             assert.equal(dataRowItems.length, 5);
 
@@ -385,7 +385,7 @@ describe('ScriptParse test', () => {
                 'end\n' +
                 ' 1 1 1';
 
-            let scriptItem = ScriptParser.parse('test', textContent);
+            let scriptItem = ScriptParser.parse(textContent);
             let dataRowItems = scriptItem.dataRowItems;
             assert.equal(dataRowItems.length, 3);
 
@@ -422,7 +422,7 @@ describe('ScriptParse test', () => {
                 '  1 1 1\n' +
                 'end\n';
 
-            let scriptItem = ScriptParser.parse('test', textContent);
+            let scriptItem = ScriptParser.parse(textContent);
             let dataRowItems = scriptItem.dataRowItems;
             assert.equal(dataRowItems.length, 1);
 
@@ -469,9 +469,11 @@ describe('ScriptParse test', () => {
         1 0 0
         1 1 1`;
 
-        let scriptItem = ScriptParser.parse('name1', textContent);
+        let scriptItem = ScriptParser.parse(textContent, 'name1', 'filePath1');
 
         assert.equal(scriptItem.name, 'name1');
+        assert.equal(scriptItem.scriptFilePath, 'filePath1');
+
         assert(ObjectUtils.equals(scriptItem.frontMatter, {
             bitWidth: 1,
             inputPinCount: 2
@@ -518,7 +520,7 @@ describe('ScriptParse test', () => {
         let scriptFile1 = path.join(resourcesDirectory, 'sample_test_script_1.txt');
 
         let scriptItem = await ScriptParser.parseFile(scriptFile1);
-        assert.equal(scriptItem.name, 'sample_test_script_1');
+        assert.equal(scriptItem.name, 'sample_test_script_1.txt');
         let dataRowItems = scriptItem.dataRowItems;
         assert.equal(dataRowItems.length, 4);
     });

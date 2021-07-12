@@ -11,12 +11,17 @@ const { UnitTestController,
 
 const assert = require('assert/strict');
 
-// 加载测试脚本的辅助方法
-async function loadTestScript(scriptFileName) {
+function getScriptFilePath(scriptFileName) {
     let testDirectory = __dirname;
     let resourcesDirectory = path.join(testDirectory, 'resources');
-    let scriptFile1 = path.join(resourcesDirectory, scriptFileName);
-    let scriptItem1 = await ScriptParser.parseFile(scriptFile1); // 有可能抛出 ParseException 异常
+    let scriptFilePath1 = path.join(resourcesDirectory, scriptFileName);
+    return scriptFilePath1;
+}
+
+// 加载测试脚本的辅助方法
+async function loadTestScript(scriptFileName) {
+    let scriptFilePath1 = getScriptFilePath(scriptFileName);
+    let scriptItem1 = await ScriptParser.parseFile(scriptFilePath1); // 有可能抛出 ScriptParseException 异常
     return scriptItem1;
 }
 
@@ -28,7 +33,7 @@ describe('UnitTestController Test', () => {
         let projectDirectory = path.dirname(testDirectory);
         let jslogiccircuitPackageDirectory = path.join(
             projectDirectory, 'node_modules', 'jslogiccircuit');
-        let sampleLogicPackageDirectory = path.join(
+        let sampleLogicPackageRepositoryDirectory = path.join(
             jslogiccircuitPackageDirectory, 'test', 'resources');
 
         let packageNames = [
@@ -37,7 +42,7 @@ describe('UnitTestController Test', () => {
             'sample_logic_package_by_mix'];
 
         for (let packageName of packageNames) {
-            await LogicPackageLoader.loadLogicPackage(sampleLogicPackageDirectory,
+            await LogicPackageLoader.loadLogicPackage(sampleLogicPackageRepositoryDirectory,
                 packageName);
         }
     });
@@ -49,10 +54,13 @@ describe('UnitTestController Test', () => {
         let unitTestController1 = new UnitTestController(
             'sample_logic_package_by_code',
             'and_gate',
-            scriptItem1); // 有可能抛出 ParseException 异常
+            scriptItem1); // 有可能抛出 ScriptParseException 异常
 
-        let testResult1 = unitTestController1.test();
-        assert.equal(testResult1.pass, true);
+        let unitTestResult1 = unitTestController1.test();
+        assert.equal(unitTestResult1.scriptName, 'and_gate_test.txt');
+        assert.equal(unitTestResult1.scriptFilePath, getScriptFilePath('and_gate_test.txt'));
+        assert.equal(unitTestResult1.title, 'And Gate Unit Test');
+        assert.equal(unitTestResult1.testResult.pass, true);
     });
 
     it('And gate ext test', async () => {
@@ -62,10 +70,10 @@ describe('UnitTestController Test', () => {
         let unitTestController1 = new UnitTestController(
             'sample_logic_package_by_code',
             'and_gate_ext',
-            scriptItem1); // 有可能抛出 ParseException 异常
+            scriptItem1); // 有可能抛出 ScriptParseException 异常
 
-        let testResult1 = unitTestController1.test();
-        assert.equal(testResult1.pass, true);
+        let {testResult} = unitTestController1.test();
+        assert.equal(testResult.pass, true);
     });
 
     it('Half adder test', async () => {
@@ -74,8 +82,8 @@ describe('UnitTestController Test', () => {
             'sample_logic_package_by_config', 'half_adder',
             scriptItem1);
 
-        let testResult1 = unitTestController1.test();
-        assert.equal(testResult1.pass, true);
+        let {testResult} = unitTestController1.test();
+        assert.equal(testResult.pass, true);
     });
 
     it('Full adder test', async () => {
@@ -84,8 +92,8 @@ describe('UnitTestController Test', () => {
             'sample_logic_package_by_mix', 'full_adder',
             scriptItem1);
 
-        let testResult1 = unitTestController1.test();
-        assert.equal(testResult1.pass, true);
+        let {testResult} = unitTestController1.test();
+        assert.equal(testResult.pass, true);
     });
 
     it('4-bit adder test', async () => {
@@ -94,13 +102,13 @@ describe('UnitTestController Test', () => {
             'sample_logic_package_by_mix', 'four_bit_adder',
             scriptItem1);
 
-        let testResult1 = unitTestController1.test();
-        assert.equal(testResult1.pass, true);
+        let {testResult} = unitTestController1.test();
+        assert.equal(testResult.pass, true);
     });
 
     describe('Test fail', () => {
         it('Test construct error cause of package not found', () => {
-            let scriptItem1 = ScriptParser.parse('OR gate test',
+            let scriptItem1 = ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0');
 
@@ -114,7 +122,7 @@ describe('UnitTestController Test', () => {
         });
 
         it('Test construct error cause of module not found', () => {
-            let scriptItem1 = ScriptParser.parse('OR gate test',
+            let scriptItem1 = ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0');
 
@@ -128,7 +136,7 @@ describe('UnitTestController Test', () => {
         });
 
         it('Test module in port list not found error', () => {
-            let scriptItem1 = ScriptParser.parse('OR gate test',
+            let scriptItem1 = ScriptParser.parse(
                 'A subModule.B Q\n' + // <-- not module named 'subModule'
                 '0 0 0');
 
@@ -144,7 +152,7 @@ describe('UnitTestController Test', () => {
         });
 
         it('Test port in port list not found error', () => {
-            let scriptItem1 = ScriptParser.parse('OR gate test',
+            let scriptItem1 = ScriptParser.parse(
                 'A B Out\n' + // <-- no port named 'Out'
                 '0 0 0');
 
@@ -160,7 +168,7 @@ describe('UnitTestController Test', () => {
         });
 
         it('Test check error', () => {
-            let scriptItem1 = ScriptParser.parse('OR gate test',
+            let scriptItem1 = ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0\n' +
                 '0 1 1\n' +
@@ -170,16 +178,16 @@ describe('UnitTestController Test', () => {
             let unitTestController1 = new UnitTestController(
                 'sample_logic_package_by_code', 'or_gate', scriptItem1);
 
-            let testResult1 = unitTestController1.test();
-            assert.equal(testResult1.pass, false);
-            assert.equal(testResult1.lineIdx, 3);
-            assert.equal(testResult1.portName, 'Q');
-            assert.equal(testResult1.actual.toBinaryString(), '1');
-            assert.equal(testResult1.expect.toBinaryString(), '0');
+            let {testResult} = unitTestController1.test();
+            assert.equal(testResult.pass, false);
+            assert.equal(testResult.lineIdx, 3);
+            assert.equal(testResult.portName, 'Q');
+            assert.equal(testResult.actual.toBinaryString(), '1');
+            assert.equal(testResult.expect.toBinaryString(), '0');
         });
 
         it('Test check error in loop', () => {
-            let scriptItem1 = ScriptParser.parse('Full adder test',
+            let scriptItem1 = ScriptParser.parse(
                 'A B Cin {Cout, S}\n' +
                 '0 0 0   0\n' +
                 '0 1 0   1\n' +
@@ -201,16 +209,16 @@ describe('UnitTestController Test', () => {
             let unitTestController1 = new UnitTestController(
                 'sample_logic_package_by_mix', 'full_adder', scriptItem1);
 
-            let testResult1 = unitTestController1.test();
-            assert.equal(testResult1.pass, false);
-            assert.equal(testResult1.lineIdx, 9);
-            assert.equal(testResult1.portName, '{Cout, S}');
-            assert.equal(testResult1.actual.toBinaryString(), '1');  // 0b1
-            assert.equal(testResult1.expect.toBinaryString(), '10'); // 0b10
+            let {testResult} = unitTestController1.test();
+            assert.equal(testResult.pass, false);
+            assert.equal(testResult.lineIdx, 9);
+            assert.equal(testResult.portName, '{Cout, S}');
+            assert.equal(testResult.actual.toBinaryString(), '1');  // 0b1
+            assert.equal(testResult.expect.toBinaryString(), '10'); // 0b10
         });
 
         it('Test input data syntax error', () => {
-            let scriptItem1 = ScriptParser.parse('OR gate test',
+            let scriptItem1 = ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0\n' +
                 '* 1 1\n' +  // <-- line idx 2 input data syntax error (wildcard is not allowed for input port)
@@ -233,7 +241,7 @@ describe('UnitTestController Test', () => {
         });
 
         it('Test arithmetic syntax error', () => {
-            let scriptItem1 = ScriptParser.parse('OR gate test',
+            let scriptItem1 = ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0\n' +
                 '0 1 1\n' +
@@ -256,7 +264,7 @@ describe('UnitTestController Test', () => {
         });
 
         it('Test arithmetic evaluate error', () => {
-            let scriptItem1 = ScriptParser.parse('OR gate test',
+            let scriptItem1 = ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0\n' +
                 '0 1 (a+b)\n' +  // <-- line idx 2 arithmetic syntax error

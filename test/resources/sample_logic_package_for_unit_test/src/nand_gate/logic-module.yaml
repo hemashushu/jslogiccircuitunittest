@@ -1,0 +1,17 @@
+title: NAND Gate
+description: Logic "NAND" Gate
+defaultParameters:
+  - name: inputPinCount
+    description: The count of input pins
+    value: 2
+    valueType: range
+    valueRange:
+      from: 2
+      to: 32
+  - name: bitWidth
+    description: The bit width of each pins
+    value: 1
+    valueType: range
+    valueRange:
+      from: 1
+      to: 32
