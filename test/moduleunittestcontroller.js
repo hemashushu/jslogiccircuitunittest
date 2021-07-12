@@ -1,16 +1,9 @@
 const path = require('path');
 
-const { IllegalArgumentException } = require('jsexception');
 const { ObjectUtils } = require('jsobjectutils');
 const { LogicPackageLoader } = require('jslogiccircuit');
 
-const {
-    ModuleUnitTestController,
-    UnitTestController,
-    ScriptParser,
-    ScriptParseException,
-    ParseErrorCode
-} = require('../index');
+const { ModuleUnitTestController } = require('../index');
 
 const assert = require('assert/strict');
 

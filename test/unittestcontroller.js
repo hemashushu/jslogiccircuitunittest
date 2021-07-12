@@ -1,6 +1,6 @@
 const path = require('path');
-const { IllegalArgumentException } = require('jsexception');
 
+const { IllegalArgumentException } = require('jsexception');
 const { LogicPackageLoader } = require('jslogiccircuit');
 
 const { UnitTestController,
@@ -72,7 +72,7 @@ describe('UnitTestController Test', () => {
             'and_gate_ext',
             scriptItem1); // 有可能抛出 ScriptParseException 异常
 
-        let {testResult} = unitTestController1.test();
+        let { testResult } = unitTestController1.test();
         assert.equal(testResult.pass, true);
     });
 
@@ -82,7 +82,7 @@ describe('UnitTestController Test', () => {
             'sample_logic_package_by_config', 'half_adder',
             scriptItem1);
 
-        let {testResult} = unitTestController1.test();
+        let { testResult } = unitTestController1.test();
         assert.equal(testResult.pass, true);
     });
 
@@ -92,7 +92,7 @@ describe('UnitTestController Test', () => {
             'sample_logic_package_by_mix', 'full_adder',
             scriptItem1);
 
-        let {testResult} = unitTestController1.test();
+        let { testResult } = unitTestController1.test();
         assert.equal(testResult.pass, true);
     });
 
@@ -102,7 +102,7 @@ describe('UnitTestController Test', () => {
             'sample_logic_package_by_mix', 'four_bit_adder',
             scriptItem1);
 
-        let {testResult} = unitTestController1.test();
+        let { testResult } = unitTestController1.test();
         assert.equal(testResult.pass, true);
     });
 
@@ -178,7 +178,7 @@ describe('UnitTestController Test', () => {
             let unitTestController1 = new UnitTestController(
                 'sample_logic_package_by_code', 'or_gate', scriptItem1);
 
-            let {testResult} = unitTestController1.test();
+            let { testResult } = unitTestController1.test();
             assert.equal(testResult.pass, false);
             assert.equal(testResult.lineIdx, 3);
             assert.equal(testResult.portName, 'Q');
@@ -209,7 +209,7 @@ describe('UnitTestController Test', () => {
             let unitTestController1 = new UnitTestController(
                 'sample_logic_package_by_mix', 'full_adder', scriptItem1);
 
-            let {testResult} = unitTestController1.test();
+            let { testResult } = unitTestController1.test();
             assert.equal(testResult.pass, false);
             assert.equal(testResult.lineIdx, 9);
             assert.equal(testResult.portName, '{Cout, S}');
