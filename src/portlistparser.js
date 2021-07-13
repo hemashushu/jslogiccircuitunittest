@@ -1,12 +1,11 @@
-const ScriptParseException = require('./scriptparseexception');
-const ParseErrorDetail = require('./parseerrordetail');
-const ParseErrorCode = require('./parseerrorcode');
-
 const { BitRange } = require('jslogiccircuit');
 
-const PortItem = require('./portitem');
-const SlicePortItem = require('./sliceportitem');
 const CombinedPortItem = require('./combinedportitem');
+const ParseErrorCode = require('./parseerrorcode');
+const ParseErrorDetail = require('./parseerrordetail');
+const PortItem = require('./portitem');
+const ScriptParseException = require('./scriptparseexception');
+const SlicePortItem = require('./sliceportitem');
 
 class PortListParser {
     /**
@@ -233,8 +232,8 @@ class PortListParser {
                     new ParseErrorDetail(ParseErrorCode.invalidPortName,
                         'invalid-port-name',
                         undefined, undefined, {
-                            text: portItem.getTitle()
-                        }));
+                        text: portItem.getTitle()
+                    }));
             }
         }
 
@@ -353,8 +352,8 @@ class PortListParser {
                                 new ParseErrorDetail(ParseErrorCode.syntaxError,
                                     'combined-port-name-syntax-error',
                                     lineIdx, undefined, {
-                                        text: portText
-                                    }));
+                                    text: portText
+                                }));
                         }
                         break;
                     }
@@ -386,8 +385,8 @@ class PortListParser {
                 new ParseErrorDetail(ParseErrorCode.syntaxError,
                     'combined-port-name-syntax-error',
                     undefined, undefined, {
-                        text: portText
-                    }));
+                    text: portText
+                }));
         }
 
         // 花括号里提取出来的端口名称可能包含有前后空格

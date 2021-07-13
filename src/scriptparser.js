@@ -3,16 +3,15 @@ const path = require('path');
 const { PromiseTextFile } = require('jstextfile');
 const { ObjectUtils } = require('jsobjectutils');
 
-const ScriptParseException = require('./scriptparseexception');
-const ParseErrorDetail = require('./parseerrordetail');
-const ParseErrorCode = require('./parseerrorcode');
-
-const DataRowParser = require('./datarowparser');
 const DataRowItem = require('./datarowitem');
 const DataRowItemType = require('./datarowitemtype');
-const PortListParser = require('./portlistparser');
+const DataRowParser = require('./datarowparser');
 const FrontMatterParser = require('./frontmatterparser');
+const ParseErrorCode = require('./parseerrorcode');
+const ParseErrorDetail = require('./parseerrordetail');
+const PortListParser = require('./portlistparser');
 const ScriptItem = require('./scriptitem');
+const ScriptParseException = require('./scriptparseexception');
 
 const SCRIPT_FILE_EXTENSION_NAME = '.test.txt';
 
@@ -21,7 +20,7 @@ class ScriptParser {
         let fileName = path.basename(filePath);
         let scriptName = fileName;
 
-        if (fileName.endsWith(SCRIPT_FILE_EXTENSION_NAME)){
+        if (fileName.endsWith(SCRIPT_FILE_EXTENSION_NAME)) {
             scriptName = fileName.substring(0, fileName.length - SCRIPT_FILE_EXTENSION_NAME.length);
         }
 

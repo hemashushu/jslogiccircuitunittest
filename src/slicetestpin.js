@@ -1,3 +1,5 @@
+const { Signal } = require('jslogiccircuit');
+
 const AbstractTestPin = require('./abstracttestpin');
 
 class SliceTestPin extends AbstractTestPin {
@@ -22,32 +24,38 @@ class SliceTestPin extends AbstractTestPin {
         this._pin = pin;
     }
 
-    setData(data) {
-        let lastData = this._pin.getData(); // Binary 对象
+    setSignal(signal) {
+        let binary = signal.getBinary();
+
+        let lastSignal = this._pin.getSignal();
+        let lastBinary = lastSignal.getBinary();
 
         let offset = 0;
         for (let idx = this.bitRanges.length - 1; idx >= 0; idx--) {
             let bitRange = this.bitRanges[idx];
-            let partialData = data.slice(offset, bitRange.getBitWidth());
-            lastData = lastData.splice(bitRange.bitLow, partialData);
-            offset += partialData.bitWidth;
+            let partialBinary = binary.slice(offset, bitRange.getBitWidth());
+            lastBinary = lastBinary.splice(bitRange.bitLow, partialBinary);
+            offset += partialBinary.bitWidth;
         }
 
-        this._pin.setData(lastData);
+        let resultSignal = Signal.createWithoutHighZ(this.bitWidth, lastBinary);
+        this._pin.setSignal(resultSignal);
     }
 
-    getData() {
-        let lastData = this._pin.getData(); // Binary 对象
+    getSignal() {
+        let lastSignal = this._pin.getSignal();
+        let lastBinary = lastSignal.getBinary();
 
-        let data = Binary.fromBinaryString('0', this.bitWidth);
+        let binary = Binary.fromBinaryString('0', this.bitWidth);
         let offset = 0;
         for (let idx = this.bitRanges.length - 1; idx >= 0; idx--) {
             let bitRange = this.bitRanges[idx];
-            let partialData = lastData.slice(bitRange.bitLow, bitRange.getBitWidth());
-            data = data.splice(offset, partialData);
-            offset += partialData.bitWidth;
+            let partialBinary = lastBinary.slice(bitRange.bitLow, bitRange.getBitWidth());
+            binary = binary.splice(offset, partialBinary);
+            offset += partialBinary.bitWidth;
         }
-        return data;
+
+        return Signal.createWithoutHighZ(this.bitWidth, binary);
     }
 
     static getBitRangesBitWidth(bitRanges) {

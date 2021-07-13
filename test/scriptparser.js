@@ -1,7 +1,6 @@
 const path = require('path');
 
 const { ObjectUtils } = require('jsobjectutils');
-
 const { BitRange } = require('jslogiccircuit');
 
 const {

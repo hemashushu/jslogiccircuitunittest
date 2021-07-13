@@ -6,12 +6,12 @@ class TestPin extends AbstractTestPin {
         this._pin = pin;
     }
 
-    setData(data){
-        this._pin.setData(data);
+    setSignal(signal){
+        this._pin.setSignal(signal);
     }
 
-    getData() {
-        return this._pin.getData();
+    getSignal() {
+        return this._pin.getSignal();
     }
 }
 

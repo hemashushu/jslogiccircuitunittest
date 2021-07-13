@@ -1,6 +1,7 @@
-const AbstractTestPin = require('./abstracttestpin');
-
 const { Binary } = require('jsbinary');
+const { Signal } = require('jslogiccircuit');
+
+const AbstractTestPin = require('./abstracttestpin');
 
 class CombinedTestPin extends AbstractTestPin {
     /**
@@ -21,28 +22,33 @@ class CombinedTestPin extends AbstractTestPin {
         this.childTestPins = childTestPins;
     }
 
-    setData(data) {
+    setSignal(signal) {
         let offset = 0;
-        // for(let testPin of this.childTestPins) {
+
+        let binary = signal.getBinary();
         for (let idx = this.childTestPins.length - 1; idx >= 0; idx--) {
             let testPin = this.childTestPins[idx];
-            let partialData = data.slice(offset, testPin.bitWidth);
-            testPin.setData(partialData);
+            let partialBinary = binary.slice(offset, testPin.bitWidth);
+
+            let signal = Signal.createWithoutHighZ(testPin.bitWidth, partialBinary);
+            testPin.setSignal(signal);
             offset += testPin.bitWidth;
         }
     }
 
-    getData() {
-        let data = Binary.fromBinaryString('0', this.bitWidth);
+    getSignal() {
+        let binary = Binary.fromBinaryString('0', this.bitWidth);
         let offset = 0;
-        // for(let testPin of this.childTestPins) {
+
         for (let idx = this.childTestPins.length - 1; idx >= 0; idx--) {
             let testPin = this.childTestPins[idx];
-            let partialData = testPin.getData();
-            data = data.splice(offset, partialData);
-            offset += partialData.bitWidth;
+            let signal = testPin.getSignal();
+            let partialBinary = signal.getBinary();
+            binary = binary.splice(offset, partialBinary);
+            offset += partialBinary.bitWidth;
         }
-        return data;
+
+        return Signal.createWithoutHighZ(this.bitWidth, binary);
     }
 
     static getPinsBitWidth(testPins) {

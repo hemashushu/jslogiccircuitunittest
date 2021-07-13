@@ -1,11 +1,8 @@
 const path = require('path');
 
 const { IllegalArgumentException } = require('jsexception');
-
-const {PromiseFileUtils} = require('jsfileutils');
-
-const {LogicPackageLoader,
-    LogicModuleLoader} = require('jslogiccircuit');
+const { PromiseFileUtils } = require('jsfileutils');
+const { LogicPackageLoader } = require('jslogiccircuit');
 
 const ScriptParser = require('./scriptparser');
 const UnitTestController = require('./unittestcontroller');
@@ -22,7 +19,7 @@ class ModuleUnitTestController {
         let moduleTestDirectory = path.join(logicPackageItem.packageDirectory,
             'test', moduleClassName);
 
-        if (!await PromiseFileUtils.exists(moduleTestDirectory)){
+        if (!await PromiseFileUtils.exists(moduleTestDirectory)) {
             return []; // test dir not found
         }
 
@@ -32,7 +29,7 @@ class ModuleUnitTestController {
         });
 
         let scriptItems = [];
-        for(let scriptFileInfo of scriptFileInfos) {
+        for (let scriptFileInfo of scriptFileInfos) {
             let scriptItem = await ScriptParser.parseFile(scriptFileInfo.filePath);
             scriptItems.push(scriptItem);
         }
@@ -56,7 +53,7 @@ class ModuleUnitTestController {
 
         let unitTestResults = [];
 
-        for(let scriptItem of scriptItems) {
+        for (let scriptItem of scriptItems) {
             let unitTestController = new UnitTestController(
                 packageName,
                 moduleClassName,

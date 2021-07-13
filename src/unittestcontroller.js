@@ -1,23 +1,21 @@
-const ScriptParseException = require('./scriptparseexception');
-const ParseErrorDetail = require('./parseerrordetail');
-const ParseErrorCode = require('./parseerrorcode');
-
 const { Binary } = require('jsbinary');
-
+const { LocaleProperty } = require('jsfileconfig');
 const { VariableCalculator } = require('jsvariablecalculator');
 
 const { ModuleController,
-    LogicModuleFactory } = require('jslogiccircuit');
+    LogicModuleFactory,
+    Signal } = require('jslogiccircuit');
 
-const {LocaleProperty } = require('jsfileconfig');
-
-const PortItem = require('./portitem');
-const SlicePortItem = require('./sliceportitem');
-const TestPin = require('./testpin');
-const SliceTestPin = require('./slicetestpin');
 const CombinedTestPin = require('./combinedtestpin');
-const DataRowItemType = require('./datarowitemtype');
 const DataCellItemType = require('./datacellitemtype');
+const DataRowItemType = require('./datarowitemtype');
+const ParseErrorCode = require('./parseerrorcode');
+const ParseErrorDetail = require('./parseerrordetail');
+const PortItem = require('./portitem');
+const ScriptParseException = require('./scriptparseexception');
+const SlicePortItem = require('./sliceportitem');
+const SliceTestPin = require('./slicetestpin');
+const TestPin = require('./testpin');
 const TestResult = require('./testresult');
 const UnitTestResult = require('./unittestresult');
 
@@ -254,11 +252,11 @@ class UnitTestController {
                         }
 
                         let dataCellItem = dataCellItems[column];
-                        let data = UnitTestController.convertCellDataToBinary(
+                        let binary = UnitTestController.convertCellDataToBinary(
                             dataCellItem.type, dataCellItem.data, testPin.bitWidth,
                             lineIdx, variableContext);
 
-                        if (data === undefined) {
+                        if (binary === undefined) {
                             throw new ScriptParseException(
                                 'Cannot set wildcard asterisk to input port',
                                 new ParseErrorDetail(ParseErrorCode.syntaxError,
@@ -267,7 +265,9 @@ class UnitTestController {
                                 }));
                         }
 
-                        testPin.setData(data);
+                        // 当前不支持 3 态信号，只支持高低电平，所以直接忽略高阻抗值。
+                        let signal = Signal.createWithoutHighZ(testPin.bitWidth, binary);
+                        testPin.setSignal(signal);
                     }
 
                     // 2. 更新模块状态
@@ -280,21 +280,23 @@ class UnitTestController {
                             continue;
                         }
                         let dataCellItem = dataCellItems[column];
-                        let expectData = UnitTestController.convertCellDataToBinary(
+                        let expectBinary = UnitTestController.convertCellDataToBinary(
                             dataCellItem.type, dataCellItem.data, testPin.bitWidth,
                             lineIdx, variableContext);
 
                         // 单元数据是一个星号
-                        if (expectData === undefined) {
+                        if (expectBinary === undefined) {
                             continue;
                         }
 
-                        let actualData = testPin.getData();
+                        // 当前不支持 3 态信号，只支持高低电平，所以直接忽略高阻抗值。
+                        let actualSignal = testPin.getSignal();
+                        let actualBinary = actualSignal.getBinary();
 
-                        if (!Binary.equal(actualData, expectData)) {
+                        if (!Binary.equal(actualBinary, expectBinary)) {
                             return new TestResult(false,
                                 lineIdx, testPin.name,
-                                actualData, expectData);
+                                actualBinary, expectBinary);
                         }
                     }
 
