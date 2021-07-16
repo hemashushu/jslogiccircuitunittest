@@ -1,7 +1,9 @@
 const path = require('path');
 
-const { IllegalArgumentException } = require('jsexception');
-const { LogicPackageLoader } = require('jslogiccircuit');
+const { PackageRepositoryManager,
+    LogicPackageLoader,
+    LogicPackageNotFoundException,
+    LogicModuleNotFoundException } = require('jslogiccircuit');
 
 const { UnitTestController,
     ScriptParser,
@@ -34,16 +36,19 @@ describe('UnitTestController Test', () => {
         let jslogiccircuitPackageDirectory = path.join(
             projectDirectory, 'node_modules', 'jslogiccircuit');
         let sampleLogicPackageRepositoryDirectory = path.join(
-            jslogiccircuitPackageDirectory, 'test', 'resources');
+            jslogiccircuitPackageDirectory, 'test', 'resources', 'package-repository-2');
+
+        let packageRepositoryManager1 = new PackageRepositoryManager();
+        packageRepositoryManager1.addRepositoryDirectory(sampleLogicPackageRepositoryDirectory, false);
 
         let packageNames = [
-            'sample_logic_package_by_code',
-            'sample_logic_package_by_config',
-            'sample_logic_package_by_mix'];
+            'package-by-code',
+            'package-by-config',
+            'package-by-mix'];
 
         for (let packageName of packageNames) {
-            await LogicPackageLoader.loadLogicPackage(sampleLogicPackageRepositoryDirectory,
-                packageName);
+            await LogicPackageLoader.loadLogicPackage(
+                packageRepositoryManager1, packageName);
         }
     });
 
@@ -52,7 +57,7 @@ describe('UnitTestController Test', () => {
 
         // 构造测试控制器
         let unitTestController1 = new UnitTestController(
-            'sample_logic_package_by_code',
+            'package-by-code',
             'and_gate',
             scriptItem1); // 有可能抛出 ScriptParseException 异常
 
@@ -68,7 +73,7 @@ describe('UnitTestController Test', () => {
 
         // 构造测试控制器
         let unitTestController1 = new UnitTestController(
-            'sample_logic_package_by_code',
+            'package-by-code',
             'and_gate_ext',
             scriptItem1); // 有可能抛出 ScriptParseException 异常
 
@@ -79,7 +84,7 @@ describe('UnitTestController Test', () => {
     it('Half adder test', async () => {
         let scriptItem1 = await loadTestScript('half_adder_test.txt')
         let unitTestController1 = new UnitTestController(
-            'sample_logic_package_by_config', 'half_adder',
+            'package-by-config', 'half_adder',
             scriptItem1);
 
         let { testResult } = unitTestController1.test();
@@ -89,7 +94,7 @@ describe('UnitTestController Test', () => {
     it('Full adder test', async () => {
         let scriptItem1 = await loadTestScript('full_adder_test.txt')
         let unitTestController1 = new UnitTestController(
-            'sample_logic_package_by_mix', 'full_adder',
+            'package-by-mix', 'full_adder',
             scriptItem1);
 
         let { testResult } = unitTestController1.test();
@@ -99,7 +104,7 @@ describe('UnitTestController Test', () => {
     it('4-bit adder test', async () => {
         let scriptItem1 = await loadTestScript('four_bit_adder_test.txt')
         let unitTestController1 = new UnitTestController(
-            'sample_logic_package_by_mix', 'four_bit_adder',
+            'package-by-mix', 'four_bit_adder',
             scriptItem1);
 
         let { testResult } = unitTestController1.test();
@@ -117,7 +122,7 @@ describe('UnitTestController Test', () => {
                     'no-this-package', 'or_gate', scriptItem1);
                 assert.fail();
             } catch (e) {
-                assert(e instanceof IllegalArgumentException);
+                assert(e instanceof LogicPackageNotFoundException);
             }
         });
 
@@ -128,10 +133,10 @@ describe('UnitTestController Test', () => {
 
             try {
                 let unitTestController1 = new UnitTestController(
-                    'sample_logic_package_by_code', 'or_gate_ext', scriptItem1);
+                    'package-by-code', 'or_gate_ext', scriptItem1);
                 assert.fail();
             } catch (e) {
-                assert(e instanceof IllegalArgumentException);
+                assert(e instanceof LogicModuleNotFoundException);
             }
         });
 
@@ -142,7 +147,7 @@ describe('UnitTestController Test', () => {
 
             try {
                 let unitTestController1 = new UnitTestController(
-                    'sample_logic_package_by_code', 'or_gate', scriptItem1);
+                    'package-by-code', 'or_gate', scriptItem1);
                 assert.fail();
             } catch (e) {
                 assert(e instanceof ScriptParseException);
@@ -158,7 +163,7 @@ describe('UnitTestController Test', () => {
 
             try {
                 new UnitTestController(
-                    'sample_logic_package_by_code', 'or_gate', scriptItem1);
+                    'package-by-code', 'or_gate', scriptItem1);
                 assert.fail();
             } catch (e) {
                 assert(e instanceof ScriptParseException);
@@ -176,9 +181,10 @@ describe('UnitTestController Test', () => {
                 '1 1 1');
 
             let unitTestController1 = new UnitTestController(
-                'sample_logic_package_by_code', 'or_gate', scriptItem1);
+                'package-by-code', 'or_gate', scriptItem1);
 
             let { testResult } = unitTestController1.test();
+
             assert.equal(testResult.pass, false);
             assert.equal(testResult.lineIdx, 3);
             assert.equal(testResult.portName, 'Q');
@@ -207,7 +213,7 @@ describe('UnitTestController Test', () => {
                 '1 1 1   3');
 
             let unitTestController1 = new UnitTestController(
-                'sample_logic_package_by_mix', 'full_adder', scriptItem1);
+                'package-by-mix', 'full_adder', scriptItem1);
 
             let { testResult } = unitTestController1.test();
             assert.equal(testResult.pass, false);
@@ -221,12 +227,12 @@ describe('UnitTestController Test', () => {
             let scriptItem1 = ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0\n' +
-                '* 1 1\n' +  // <-- line idx 2 input data syntax error (wildcard is not allowed for input port)
+                'x 1 1\n' +  // <-- line idx 2 input data syntax error (wildcard is not allowed for input port)
                 '1 0 1\n' +
                 '1 1 1');
 
             let unitTestController1 = new UnitTestController(
-                'sample_logic_package_by_code', 'or_gate', scriptItem1);
+                'package-by-code', 'or_gate', scriptItem1);
 
             try {
                 unitTestController1.test();
@@ -249,7 +255,7 @@ describe('UnitTestController Test', () => {
                 '1 1 1');
 
             let unitTestController1 = new UnitTestController(
-                'sample_logic_package_by_code', 'or_gate', scriptItem1);
+                'package-by-code', 'or_gate', scriptItem1);
 
             try {
                 unitTestController1.test();
@@ -272,7 +278,7 @@ describe('UnitTestController Test', () => {
                 '1 1 1');
 
             let unitTestController1 = new UnitTestController(
-                'sample_logic_package_by_code', 'or_gate', scriptItem1);
+                'package-by-code', 'or_gate', scriptItem1);
 
             try {
                 unitTestController1.test();

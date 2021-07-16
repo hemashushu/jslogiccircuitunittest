@@ -1,5 +1,5 @@
 {
-    "name": "sample_logic_package_for_unit_test",
+    "name": "package-for-unit-test",
     "version": "1.0.0",
     "author": {"name": "Hippo Spark"},
     "homepage": "https://github.com/hemashushu/jslogiccircuitunittest"

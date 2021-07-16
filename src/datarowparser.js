@@ -303,7 +303,7 @@ class DataRowParser {
             // 算术表达式
             let cellTextContent = cellText.substring(1, cellText.length - 1);
             return DataRowParser.convertToArithmeticDataCellItem(cellTextContent);
-        } else if (cellText === '*') {
+        } else if (cellText === 'x') {
             // 忽略值
             return DataRowParser.convertToIgnoreDataCellItem();
         } else if (/^[a-z][a-z0-9_]*$/.test(cellText)) {

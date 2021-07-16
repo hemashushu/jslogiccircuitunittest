@@ -1,7 +1,7 @@
 const path = require('path');
 
 const { ObjectUtils } = require('jsobjectutils');
-const { LogicPackageLoader } = require('jslogiccircuit');
+const { PackageRepositoryManager, LogicPackageLoader } = require('jslogiccircuit');
 
 const { ModuleUnitTestController } = require('../index');
 
@@ -10,10 +10,13 @@ const assert = require('assert/strict');
 describe('ModuleUnitTestController Test', () => {
     it('Test load unit test items', async () => {
         let testDirectory = __dirname;
-        let sampleLogicPackageRepositoryDirectory = path.join(testDirectory, 'resources');
+        let sampleLogicPackageRepositoryDirectory = path.join(testDirectory, 'resources', 'package-repository-3');
 
-        let packageItem = await LogicPackageLoader.loadLogicPackage(sampleLogicPackageRepositoryDirectory,
-            'sample_logic_package_for_unit_test');
+        let packageRepositoryManager1 = new PackageRepositoryManager();
+        packageRepositoryManager1.addRepositoryDirectory(sampleLogicPackageRepositoryDirectory, false);
+
+        let packageItem = await LogicPackageLoader.loadLogicPackage(
+            packageRepositoryManager1, 'package-for-unit-test');
 
         let scriptItems = await ModuleUnitTestController.loadModuleUnitTestScriptItems(
             packageItem.name, 'nand_gate');
@@ -30,10 +33,13 @@ describe('ModuleUnitTestController Test', () => {
 
     it('Test module all unit test scripts', async () => {
         let testDirectory = __dirname;
-        let sampleLogicPackageRepositoryDirectory = path.join(testDirectory, 'resources');
+        let sampleLogicPackageRepositoryDirectory = path.join(testDirectory, 'resources', 'package-repository-3');
 
-        let packageItem = await LogicPackageLoader.loadLogicPackage(sampleLogicPackageRepositoryDirectory,
-            'sample_logic_package_for_unit_test');
+        let packageRepositoryManager1 = new PackageRepositoryManager();
+        packageRepositoryManager1.addRepositoryDirectory(sampleLogicPackageRepositoryDirectory, false);
+
+        let packageItem = await LogicPackageLoader.loadLogicPackage(
+            packageRepositoryManager1, 'package-for-unit-test');
 
         let moduleUnitTestResult = await ModuleUnitTestController.testModule(
             packageItem.name, 'nand_gate');

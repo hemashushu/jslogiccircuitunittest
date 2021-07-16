@@ -2,7 +2,7 @@ const path = require('path');
 
 const { IllegalArgumentException } = require('jsexception');
 const { PromiseFileUtils } = require('jsfileutils');
-const { LogicPackageLoader } = require('jslogiccircuit');
+const { LogicPackageLoader, PackageResourceLocator } = require('jslogiccircuit');
 
 const ScriptParser = require('./scriptparser');
 const UnitTestController = require('./unittestcontroller');
@@ -16,8 +16,9 @@ class ModuleUnitTestController {
                 `Can not find the specified package "${packageName}".`);
         }
 
-        let moduleTestDirectory = path.join(logicPackageItem.packageDirectory,
-            'test', moduleClassName);
+        let packageResourceLocator = PackageResourceLocator.create(logicPackageItem.packageDirectory);
+        let moduleResourceLocator = packageResourceLocator.createModuleResourceLocator(moduleClassName);
+        let moduleTestDirectory = moduleResourceLocator.getModuleTestDirectory();
 
         if (!await PromiseFileUtils.exists(moduleTestDirectory)) {
             return []; // test dir not found

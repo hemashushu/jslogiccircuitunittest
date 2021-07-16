@@ -298,12 +298,13 @@ describe('ScriptParse test', () => {
                 new DataCellItem(DataCellItemType.arithmetic, 'bar')
             ]));
 
-            let { dataRowItem: dataRowItem3 } = DataRowParser.parseLine(0, '1 0 * "*"');
+            let { dataRowItem: dataRowItem3 } = DataRowParser.parseLine(0, '1 0 x "x" (x)');
             assert(ObjectUtils.arrayEquals(dataRowItem3.dataCellItems, [
                 new DataCellItem(DataCellItemType.number, 1),
                 new DataCellItem(DataCellItemType.number, 0),
                 new DataCellItem(DataCellItemType.ignore),
-                new DataCellItem(DataCellItemType.string, '*')
+                new DataCellItem(DataCellItemType.string, 'x'),
+                new DataCellItem(DataCellItemType.arithmetic, 'x')
             ]));
 
             let { dataRowItem: dataRowItem4 } = DataRowParser.parseLine(0, '(log2(100)+1) 0b0011 (a + 0xaacc + abs(b)) 1');

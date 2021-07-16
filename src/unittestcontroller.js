@@ -4,7 +4,8 @@ const { VariableCalculator } = require('jsvariablecalculator');
 
 const { ModuleController,
     LogicModuleFactory,
-    Signal } = require('jslogiccircuit');
+    Signal,
+    PinDirection } = require('jslogiccircuit');
 
 const CombinedTestPin = require('./combinedtestpin');
 const DataCellItemType = require('./datacellitemtype');
@@ -169,8 +170,9 @@ class UnitTestController {
 
         let pinName = names[names.length - 1];
 
-        let pin = targetLogicModule.getInputPin(pinName);
+        let pin = targetLogicModule.getPin(pinName);
         if (pin !== undefined) {
+            canTestInput = canTestInput && (pin.pinDirection === PinDirection.input);
             return {
                 pin: pin,
                 canTestInput: canTestInput
@@ -179,7 +181,7 @@ class UnitTestController {
 
         // 输出端口只能用于输出测试（当然了）
         canTestInput = false;
-        pin = targetLogicModule.getOutputPin(pinName);
+        pin = targetLogicModule.getPin(pinName);
         if (pin !== undefined) {
             return {
                 pin: pin,
