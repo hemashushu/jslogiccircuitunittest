@@ -16,11 +16,12 @@ class FrontMatterParser {
      *
      * 第 1 行和第 4 行的 3 个连续减号（-）用于表示头信息的开始和结束。
      * 中间为头信息的主体内容，每行的格式为 “key: value”，
-     * 即键名加冒号，然后是键值。键值只支持 3 种数据类型：
+     * 即键名加冒号，然后是键值。键值只支持 4 种数据类型：
      *
      * - 数字，如 123, 0b0101，0xaabb00ff
      * - 布尔，如 true，false
      * - 字符串，如 "abc"， "foo bar"， "Hello World!"
+     * - 外部文件，如 object(file:file_name.yaml) 或者 binary(file:file_name.bin)
      *
      * 其中字符串的双引号在无歧义的情况下可以省略。
      *

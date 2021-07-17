@@ -112,8 +112,8 @@ describe('UnitTestController Test', () => {
     });
 
     describe('Test fail', () => {
-        it('Test construct error cause of package not found', () => {
-            let scriptItem1 = ScriptParser.parse(
+        it('Test construct error cause of package not found', async () => {
+            let scriptItem1 = await ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0');
 
@@ -126,8 +126,8 @@ describe('UnitTestController Test', () => {
             }
         });
 
-        it('Test construct error cause of module not found', () => {
-            let scriptItem1 = ScriptParser.parse(
+        it('Test construct error cause of module not found', async () => {
+            let scriptItem1 = await ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0');
 
@@ -140,8 +140,8 @@ describe('UnitTestController Test', () => {
             }
         });
 
-        it('Test module in port list not found error', () => {
-            let scriptItem1 = ScriptParser.parse(
+        it('Test module in port list not found error', async () => {
+            let scriptItem1 = await ScriptParser.parse(
                 'A subModule.B Q\n' + // <-- not module named 'subModule'
                 '0 0 0');
 
@@ -156,8 +156,8 @@ describe('UnitTestController Test', () => {
             }
         });
 
-        it('Test port in port list not found error', () => {
-            let scriptItem1 = ScriptParser.parse(
+        it('Test port in port list not found error', async () => {
+            let scriptItem1 = await ScriptParser.parse(
                 'A B Out\n' + // <-- no port named 'Out'
                 '0 0 0');
 
@@ -172,8 +172,8 @@ describe('UnitTestController Test', () => {
             }
         });
 
-        it('Test check error', () => {
-            let scriptItem1 = ScriptParser.parse(
+        it('Test check error', async () => {
+            let scriptItem1 = await ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0\n' +
                 '0 1 1\n' +
@@ -192,8 +192,8 @@ describe('UnitTestController Test', () => {
             assert.equal(testResult.expect.toBinaryString(), '0');
         });
 
-        it('Test check error in loop', () => {
-            let scriptItem1 = ScriptParser.parse(
+        it('Test check error in loop', async () => {
+            let scriptItem1 = await ScriptParser.parse(
                 'A B Cin {Cout, S}\n' +
                 '0 0 0   0\n' +
                 '0 1 0   1\n' +
@@ -223,8 +223,8 @@ describe('UnitTestController Test', () => {
             assert.equal(testResult.expect.toBinaryString(), '10'); // 0b10
         });
 
-        it('Test input data syntax error', () => {
-            let scriptItem1 = ScriptParser.parse(
+        it('Test input data syntax error', async () => {
+            let scriptItem1 = await ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0\n' +
                 'x 1 1\n' +  // <-- line idx 2 input data syntax error (wildcard is not allowed for input port)
@@ -246,8 +246,8 @@ describe('UnitTestController Test', () => {
             }
         });
 
-        it('Test arithmetic syntax error', () => {
-            let scriptItem1 = ScriptParser.parse(
+        it('Test arithmetic syntax error', async () => {
+            let scriptItem1 = await ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0\n' +
                 '0 1 1\n' +
@@ -269,8 +269,8 @@ describe('UnitTestController Test', () => {
             }
         });
 
-        it('Test arithmetic evaluate error', () => {
-            let scriptItem1 = ScriptParser.parse(
+        it('Test arithmetic evaluate error', async () => {
+            let scriptItem1 = await ScriptParser.parse(
                 'A B Q\n' +
                 '0 0 0\n' +
                 '0 1 (a+b)\n' +  // <-- line idx 2 arithmetic syntax error

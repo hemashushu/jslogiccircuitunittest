@@ -1,6 +1,8 @@
 ---
 bitWidth: 1
 inputPinCount: 2
+someObject: object(file:sample.yaml)
+someBinary: binary(file:sample.bin)
 ---
 A B Q
 0 0 0

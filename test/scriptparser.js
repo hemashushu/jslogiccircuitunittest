@@ -316,7 +316,7 @@ describe('ScriptParse test', () => {
             ]));
         });
 
-        it('Test "nop" statement', () => {
+        it('Test "nop" statement', async () => {
             let textContent =
                 'A B Q\n' +
                 '0 0 0\n' +
@@ -324,7 +324,7 @@ describe('ScriptParse test', () => {
                 'nop # rem1\n' +
                 '1 1 1';
 
-            let scriptItem = ScriptParser.parse(textContent);
+            let scriptItem = await ScriptParser.parse(textContent);
             let dataRowItems = scriptItem.dataRowItems;
             assert.equal(dataRowItems.length, 4);
 
@@ -339,7 +339,7 @@ describe('ScriptParse test', () => {
             assert.equal(dataRowItems[3].type, DataRowItemType.data);
         });
 
-        it('Test "repeat" statement', () => {
+        it('Test "repeat" statement', async () => {
             let textContent =
                 'A B Q\n' +
                 '0 0 0\n' +
@@ -348,7 +348,7 @@ describe('ScriptParse test', () => {
                 'repeat(5) nop\n' +
                 ' 1 1 1';
 
-            let scriptItem = ScriptParser.parse(textContent);
+            let scriptItem = await ScriptParser.parse(textContent);
             let dataRowItems = scriptItem.dataRowItems;
             assert.equal(dataRowItems.length, 5);
 
@@ -375,7 +375,7 @@ describe('ScriptParse test', () => {
             assert.equal(dataRowItems[3].childDataRowItems[0].type, DataRowItemType.nop);
         });
 
-        it('Test "for" statement', () => {
+        it('Test "for" statement', async () => {
             let textContent =
                 'A B Q\n' +
                 '0 0 0\n' +
@@ -385,7 +385,7 @@ describe('ScriptParse test', () => {
                 'end\n' +
                 ' 1 1 1';
 
-            let scriptItem = ScriptParser.parse(textContent);
+            let scriptItem = await ScriptParser.parse(textContent);
             let dataRowItems = scriptItem.dataRowItems;
             assert.equal(dataRowItems.length, 3);
 
@@ -411,7 +411,7 @@ describe('ScriptParse test', () => {
             ]));
         });
 
-        it('Test cascading "for" statement', () => {
+        it('Test cascading "for" statement', async () => {
             let textContent =
                 'A B Q\n' +
                 'for(i, 0, 10)\n' +
@@ -422,7 +422,7 @@ describe('ScriptParse test', () => {
                 '  1 1 1\n' +
                 'end\n';
 
-            let scriptItem = ScriptParser.parse(textContent);
+            let scriptItem = await ScriptParser.parse(textContent);
             let dataRowItems = scriptItem.dataRowItems;
             assert.equal(dataRowItems.length, 1);
 
@@ -457,7 +457,7 @@ describe('ScriptParse test', () => {
         });
     });
 
-    it('Test parse', () => {
+    it('Test parse', async () => {
         let textContent =
             `---
         bitWidth: 1
@@ -469,7 +469,7 @@ describe('ScriptParse test', () => {
         1 0 0
         1 1 1`;
 
-        let scriptItem = ScriptParser.parse(textContent, 'name1', 'filePath1');
+        let scriptItem = await ScriptParser.parse(textContent, 'name1', 'filePath1');
 
         assert.equal(scriptItem.name, 'name1');
         assert.equal(scriptItem.scriptFilePath, 'filePath1');
@@ -521,7 +521,52 @@ describe('ScriptParse test', () => {
 
         let scriptItem = await ScriptParser.parseFile(scriptFile1);
         assert.equal(scriptItem.name, 'sample_test_script_1.txt');
+
+        // 检查 front matter
+        let frontMatter = scriptItem.frontMatter;
+        assert.equal(frontMatter.bitWidth, 1);
+        assert.equal(frontMatter.inputPinCount, 2);
+
+        assert(ObjectUtils.arrayEquals(frontMatter.someObject, [
+            { address: 0, value: 0 },
+            { address: 1, value: 0 },
+            { address: 2, value: 0 },
+            { address: 3, value: 1 }
+        ]));
+
+        assert.equal(frontMatter.someBinary.toString('utf-8'), 'hello');
+
+        // 检查 data row items
         let dataRowItems = scriptItem.dataRowItems;
         assert.equal(dataRowItems.length, 4);
+
+        let lineIdxs = dataRowItems.map(item => item.lineIdx);
+        assert(ObjectUtils.arrayEquals(lineIdxs, [7, 8, 9, 10]));
+
+        let cellRows = dataRowItems.map(item => item.dataCellItems);
+        assert(ObjectUtils.arrayEquals(cellRows,
+            [
+                [
+                    new DataCellItem(DataCellItemType.number, 0),
+                    new DataCellItem(DataCellItemType.number, 0),
+                    new DataCellItem(DataCellItemType.number, 0)
+                ],
+                [
+                    new DataCellItem(DataCellItemType.number, 0),
+                    new DataCellItem(DataCellItemType.number, 1),
+                    new DataCellItem(DataCellItemType.number, 0)
+                ],
+                [
+                    new DataCellItem(DataCellItemType.number, 1),
+                    new DataCellItem(DataCellItemType.number, 0),
+                    new DataCellItem(DataCellItemType.number, 0)
+                ],
+                [
+                    new DataCellItem(DataCellItemType.number, 1),
+                    new DataCellItem(DataCellItemType.number, 1),
+                    new DataCellItem(DataCellItemType.number, 1)
+                ]
+            ]
+        ));
     });
 });

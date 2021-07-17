@@ -7,6 +7,7 @@ const DataRowItem = require('./datarowitem');
 const DataRowItemType = require('./datarowitemtype');
 const DataRowParser = require('./datarowparser');
 const FrontMatterParser = require('./frontmatterparser');
+const FrontMatterResolver = require('./frontmatterresolver');
 const ParseErrorCode = require('./parseerrorcode');
 const ParseErrorDetail = require('./parseerrordetail');
 const PortListParser = require('./portlistparser');
@@ -25,7 +26,7 @@ class ScriptParser {
         }
 
         let { textContent } = await PromiseTextFile.read(filePath);
-        return ScriptParser.parse(textContent, scriptName, filePath);
+        return await ScriptParser.parse(textContent, scriptName, filePath);
     }
 
     /**
@@ -36,7 +37,7 @@ class ScriptParser {
      * @returns ScriptItem 对象，如果脚本有语法错误，会抛出
      *     ScriptParseException 异常。
      */
-    static parse(textContent, scriptName, scriptFilePath) {
+    static async parse(textContent, scriptName, scriptFilePath) {
         let frontMatterItems = []; // [{key:..., value:...},...]
         let portItems;
 
@@ -144,9 +145,14 @@ class ScriptParser {
 
         let frontMatter = ObjectUtils.collapseKeyValueArray(frontMatterItems, 'key', 'value');
 
+        // 解析诸如的头信息值：
+        // object(file:file_name.yaml)
+        // binary(file:file_name.bin)
+        let resolvedFrontMatter = await FrontMatterResolver.resolve(frontMatter, scriptFilePath);
+
         let scriptItem = new ScriptItem(scriptName,
             scriptFilePath,
-            frontMatter,
+            resolvedFrontMatter,
             portItems, rootDataRowItem.childDataRowItems);
         return scriptItem;
     }
