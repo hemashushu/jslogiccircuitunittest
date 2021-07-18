@@ -6,8 +6,8 @@ const { Binary } = require('jsbinary');
  */
 class NandGate extends AbstractLogicModule {
 
-    constructor(name, instanceParameters, defaultParameters) {
-        super(name, instanceParameters, defaultParameters);
+    constructor(packageName, moduleClassName, name, instanceParameters, defaultParameters) {
+        super(packageName, moduleClassName, name, instanceParameters, defaultParameters);
         this.init();
     }
 
@@ -27,14 +27,6 @@ class NandGate extends AbstractLogicModule {
         for (let idx = 0; idx < inputPinCount; idx++) {
             createInputPin(idx);
         }
-    }
-
-    getPackageName() {
-        return 'package-for-unit-test'; // 同目录名
-    }
-
-    getModuleClassName() {
-        return 'nand_gate'; // 同目录名
     }
 
     // override
