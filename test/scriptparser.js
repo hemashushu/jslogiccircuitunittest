@@ -517,10 +517,10 @@ describe('ScriptParse test', () => {
     it('Test parseFile', async () => {
         let testDirectory = __dirname;
         let resourcesDirectory = path.join(testDirectory, 'resources');
-        let scriptFile1 = path.join(resourcesDirectory, 'sample_test_script_1.txt');
+        let scriptFile1 = path.join(resourcesDirectory, 'sample_script_1.test.txt');
 
         let scriptItem = await ScriptParser.parseFile(scriptFile1);
-        assert.equal(scriptItem.name, 'sample_test_script_1.txt');
+        assert.equal(scriptItem.name, 'sample_script_1');
 
         // 检查 front matter
         let frontMatter = scriptItem.frontMatter;

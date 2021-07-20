@@ -17,6 +17,13 @@ const ScriptParseException = require('./scriptparseexception');
 const SCRIPT_FILE_EXTENSION_NAME = '.test.txt';
 
 class ScriptParser {
+    /**
+     *
+     * - 如果脚本有语法错误，会抛出 ScriptParseException 异常。
+     *
+     * @param {*} filePath
+     * @returns
+     */
     static async parseFile(filePath) {
         let fileName = path.basename(filePath);
         let scriptName = fileName;
@@ -31,11 +38,11 @@ class ScriptParser {
 
     /**
      *
+     * - 如果脚本有语法错误，会抛出 ScriptParseException 异常。
      * @param {*} textContent
      * @param {*} scriptName 脚本的名称，可选
      * @param {*} scriptFilePath 脚本的本地文件路径，可选
-     * @returns ScriptItem 对象，如果脚本有语法错误，会抛出
-     *     ScriptParseException 异常。
+     * @returns ScriptItem 对象
      */
     static async parse(textContent, scriptName, scriptFilePath) {
         let frontMatterItems = []; // [{key:..., value:...},...]

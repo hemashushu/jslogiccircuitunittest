@@ -2,13 +2,23 @@ const path = require('path');
 
 const { IllegalArgumentException } = require('jsexception');
 const { PromiseFileUtils } = require('jsfileutils');
+const { LocaleProperty } = require('jsfileconfig');
 const { LogicPackageLoader, LogicModuleLoader, PackageResourceLocator } = require('jslogiccircuit');
 
 const ScriptParser = require('./scriptparser');
 const UnitTestController = require('./unittestcontroller');
+const UnitTestResult = require('./unittestresult');
+const TestResult = require('./testresult');
 const ModuleUnitTestResult = require('./moduleunittestresult');
 
 class ModuleUnitTestController {
+    /**
+     * - 如果指定的逻辑包或者逻辑模块找不到，会抛出 IllegalArgumentException 异常。
+     * - 如果脚本有语法错误，会抛出 ScriptParseException 异常。
+     * @param {*} packageName
+     * @param {*} moduleClassName
+     * @returns
+     */
     static async loadModuleUnitTestScriptItems(packageName, moduleClassName) {
         let logicPackageItem = LogicPackageLoader.getLogicPackageItemByName(packageName);
         if (logicPackageItem === undefined) {
@@ -50,27 +60,56 @@ class ModuleUnitTestController {
 
     /**
      *
+     * - 如果指定的逻辑包或者逻辑模块找不到，会抛出 IllegalArgumentException 异常。
+     * - 脚本文件有语法错误时抛出 ScriptParseException 异常。
+     *
      * @param {*} packageName
      * @param {*} moduleClassName
-     * @param {*} localeCode
+     * @param {*} localeCode 诸如 'en', 'zh-CN', 'jp' 等本地化语言代码。
      * @returns ModuleUnitTestResult
      */
     static async testModule(packageName, moduleClassName, localeCode = 'en') {
-        // 逻辑包或模块找不到时会抛出 IllegalArgumentException 异常。
-        // 脚本文件有错误时抛出 ScriptParseException 异常。
-        // 如果电路振荡会抛出 OscillatingException 异常。
         let scriptItems = await ModuleUnitTestController.loadModuleUnitTestScriptItems(
             packageName, moduleClassName);
 
         let unitTestResults = [];
 
         for (let scriptItem of scriptItems) {
-            let unitTestController = new UnitTestController(
-                packageName,
-                moduleClassName,
-                scriptItem, localeCode);
 
-            let unitTestResult = unitTestController.test();
+            // 尝试获取单元测试的标题
+            // 标题被写到 Front-Matter 的 "!title" 属性里，如果
+            // 不存在该属性，则使用脚本文件的名称（即不带扩展名的文件名）作为标题。
+
+            let frontMatter = scriptItem.frontMatter;
+            let title = LocaleProperty.getValue(frontMatter, '!title', localeCode);
+            if (title === undefined) {
+                title = scriptItem.name;
+            }
+
+            let unitTestResult;
+
+            try{
+                // - 如果逻辑包或者逻辑模块找不到，则抛出 IllegalArgumentException 异常。
+                // - 如果**脚本里的**端口列表指定的端口或者子模块找不到，则抛出 ScriptParseException 异常。
+                let unitTestController = new UnitTestController(
+                    packageName, moduleClassName, title,
+                    scriptItem);
+
+                unitTestResult = unitTestController.test();
+
+            }catch(err) {
+                // 构造一个结果为异常的 TestResult 对象。
+                let testResult = new TestResult(false,
+                    undefined, undefined, undefined, undefined, err);
+
+                let scriptName = scriptItem.name;
+                let scriptFilePath = scriptItem.scriptFilePath;
+
+                unitTestResult = new UnitTestResult(
+                    scriptName, scriptFilePath, title,
+                    testResult);
+            }
+
             unitTestResults.push(unitTestResult);
         }
 

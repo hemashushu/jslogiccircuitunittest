@@ -1,5 +1,4 @@
 const { Binary } = require('jsbinary');
-const { LocaleProperty } = require('jsfileconfig');
 const { VariableCalculator } = require('jsvariablecalculator');
 
 const { ModuleController,
@@ -23,24 +22,23 @@ const UnitTestResult = require('./unittestresult');
 class UnitTestController {
     /**
      * 构造测试控制器
+     * 需要先把待测试模块的逻辑包（及其逻辑模块）加载
      *
-     * - 需要先把待测试模块的逻辑包（及其逻辑模块）加载
      * - 如果逻辑包或者逻辑模块找不到，则抛出 IllegalArgumentException 异常。
      * - 如果**脚本里的**端口列表指定的端口或者子模块找不到，则抛出 ScriptParseException 异常。
      *
      * @param {*} packageName
      * @param {*} moduleClassName
-     * @param {*} scriptItem
-     * @param {*} localeCode 诸如 'en', 'zh-CN', 'jp' 等本地化语言代码。
      */
-    constructor(packageName, moduleClassName, scriptItem, localeCode = 'en') {
-        this.scriptName = scriptItem.name;
+    constructor(packageName, moduleClassName, title, scriptItem) {
+
+        this.title = title; // 单元测试的标题
+        this.scriptName = scriptItem.name; // 测试脚本的名称（即不带扩展名的文件名）
         this.scriptFilePath = scriptItem.scriptFilePath;
+        this.dataRowItems = scriptItem.dataRowItems; // 待测试的数据
 
-        // 获取测试脚本的头信息（Front-Matter）
         let frontMatter = scriptItem.frontMatter;
-
-        this.title = LocaleProperty.getValue(frontMatter, '!title', localeCode);
+        let portItems = scriptItem.portItems;
 
         // 时序模式标记
         this.seqMode = (frontMatter['!seq'] === true);
@@ -56,16 +54,13 @@ class UnitTestController {
         }
 
         let logicModule = LogicModuleFactory.createModuleInstance(
-            packageName, moduleClassName, 'logicModule1', parameters);
+            packageName, moduleClassName, 'unitTestlogicModule', parameters);
 
         // 构造端口读写列表
-        this.testPins = this.generateTestPins(logicModule, scriptItem.portItems);
+        this.testPins = this.generateTestPins(logicModule, portItems);
 
         // 模块控制器（运行器）
         this.moduleController = new ModuleController(logicModule);
-
-        // 待测试的数据
-        this.dataRowItems = scriptItem.dataRowItems;
     }
 
     /**
@@ -200,24 +195,33 @@ class UnitTestController {
 
     /**
      *
-     * - 如果模块存在振荡，则抛出 OscillatingException 异常。
-     * - 如果测试脚本存在错误（一般语法错误在加载脚本时已经检测，这里是因为
-     *   算术表达式引起的错误），则抛出 ScriptParseException 异常。
-     *
      * @returns
      */
-
     test() {
-        let variableContext = {};
-        let groupTestResult = this.testDataRowItems(
-            this.dataRowItems, variableContext, undefined, 0, 0);
+        let groupTestResult;
+
+        try{
+            let variableContext = {};
+            groupTestResult = this.testDataRowItems(
+                this.dataRowItems, variableContext, undefined, 0, 0);
+
+        }catch(err){
+            groupTestResult = new TestResult(false,
+                undefined, undefined, undefined, undefined,
+                err);
+        }
 
         return new UnitTestResult(
-            this.scriptName, this.scriptFilePath,
-            this.title, groupTestResult);
+            this.scriptName, this.scriptFilePath, this.title,
+            groupTestResult);
     }
 
     /**
+     *
+     * - 如果模块存在振荡，则抛出 OscillatingException 异常。
+     * - 如果模块存在短路情况，则抛出 ShortCircuitException 异常。
+     * - 如果测试脚本存在错误（一般语法错误在加载脚本时已经检测，这里是因为
+     *   算术表达式引起的错误），则抛出 ScriptParseException 异常。
      *
      * @param {*} dataRowItems
      * @param {*} variableContext

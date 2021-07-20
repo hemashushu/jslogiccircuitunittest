@@ -3,7 +3,7 @@
 bitWidth: 2
 inputPinCount: 2
 ---
-in0    in1    out
+in_0    in_1    out
 0b00   0b00   0b11
 0b11   0b11   0b00
 

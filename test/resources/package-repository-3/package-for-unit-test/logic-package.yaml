@@ -2,5 +2,3 @@ title: Sample Logic Package (for Unit Test)
 description: A logic package for unit testing.
 iconFilename: icon.png
 dependencies: []
-modules:
-  - "nand_gate"
