@@ -258,11 +258,13 @@ class UnitTestController {
                         }
 
                         let dataCellItem = dataCellItems[column];
-                        let binary = UnitTestController.convertCellDataToBinary(
+                        let signal = UnitTestController.convertCellDataToSignal(
                             dataCellItem.type, dataCellItem.data, testPin.bitWidth,
                             lineIdx, variableContext);
 
-                        if (binary === undefined) {
+                        // 单元格的内容是一个 "x" 字符，表示不检查输出数据，此字符
+                        // 不用用于输入信号。
+                        if (signal === undefined) {
                             throw new ScriptParseException(
                                 'Cannot set wildcard asterisk to input port',
                                 new ParseErrorDetail(ParseErrorCode.syntaxError,
@@ -271,8 +273,6 @@ class UnitTestController {
                                 }));
                         }
 
-                        // 当前不支持 3 态信号，只支持高低电平，所以直接忽略高阻抗值。
-                        let signal = Signal.createWithoutHighZ(testPin.bitWidth, binary);
                         testPin.setSignal(signal);
                     }
 
@@ -286,23 +286,22 @@ class UnitTestController {
                             continue;
                         }
                         let dataCellItem = dataCellItems[column];
-                        let expectBinary = UnitTestController.convertCellDataToBinary(
+
+                        let expectSignal = UnitTestController.convertCellDataToSignal(
                             dataCellItem.type, dataCellItem.data, testPin.bitWidth,
                             lineIdx, variableContext);
 
-                        // 单元数据是一个星号
-                        if (expectBinary === undefined) {
+                        // 单元格的内容是一个 "x" 字符，表示不检查输出数据
+                        if (expectSignal === undefined) {
                             continue;
                         }
 
-                        // 当前不支持 3 态信号，只支持高低电平，所以直接忽略高阻抗值。
                         let actualSignal = testPin.getSignal();
-                        let actualBinary = actualSignal.getBinary();
 
-                        if (!Binary.equal(actualBinary, expectBinary)) {
+                        if (!Signal.equal(actualSignal, expectSignal)) {
                             return new TestResult(false,
                                 lineIdx, testPin.name,
-                                actualBinary, expectBinary);
+                                actualSignal, expectSignal);
                         }
                     }
 
@@ -375,18 +374,31 @@ class UnitTestController {
         return data;
     }
 
-    static convertCellDataToBinary(dataCellItemType, cellItemData, bitWidth, lineIdx, variableContext) {
-        let binary;
+    /**
+     * 转换 “测试脚本数据行” 当中的单元格为 Signal 对象。
+     *
+     * @param {*} dataCellItemType
+     * @param {*} cellItemData
+     * @param {*} bitWidth
+     * @param {*} lineIdx
+     * @param {*} variableContext
+     * @returns
+     */
+    static convertCellDataToSignal(dataCellItemType, cellItemData, bitWidth, lineIdx, variableContext) {
+        let signal;
+
         switch (dataCellItemType) {
             case DataCellItemType.number:
                 {
-                    binary = Binary.fromInt32(cellItemData, bitWidth);
+                    let binary = Binary.fromInt32(cellItemData, bitWidth);
+                    signal = Signal.createWithoutHighZ(bitWidth, binary);
                     break;
                 }
 
             case DataCellItemType.string:
                 {
-                    binary = UnitTestController.convertStringToBinary(cellItemData, bitWidth);
+                    let binary = UnitTestController.convertStringToBinary(cellItemData, bitWidth);
+                    signal = Signal.createWithoutHighZ(bitWidth, binary);
                     break;
                 }
 
@@ -413,7 +425,14 @@ class UnitTestController {
                             }));
                     }
 
-                    binary = Binary.fromInt32(value, bitWidth);
+                    let binary = Binary.fromInt32(value, bitWidth);
+                    signal = Signal.createWithoutHighZ(bitWidth, binary);
+                    break;
+                }
+
+            case DataCellItemType.highZ:
+                {
+                    signal = Signal.createHighZ(bitWidth);
                     break;
                 }
 
@@ -422,7 +441,8 @@ class UnitTestController {
                     break;
                 }
         }
-        return binary;
+
+        return signal;
     }
 }
 

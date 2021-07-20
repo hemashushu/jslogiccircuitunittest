@@ -69,13 +69,13 @@ describe('UnitTestController Test', () => {
         assert.equal(unitTestResult1.testResult.pass, true);
     });
 
-    it('And gate ext test', async () => {
-        let scriptItem1 = await loadTestScript('and_gate_ext.test.txt')
+    it('And gate (with parameters) test', async () => {
+        let scriptItem1 = await loadTestScript('and_gate_parameters.test.txt')
 
         // 构造测试控制器
         let unitTestController1 = new UnitTestController(
             'package-by-code',
-            'and_gate_ext',
+            'and_gate_parameter',
             'title',
             scriptItem1);
 
@@ -209,8 +209,8 @@ describe('UnitTestController Test', () => {
             assert.equal(testResult.pass, false);
             assert.equal(testResult.lineIdx, 3);
             assert.equal(testResult.portName, 'Q');
-            assert.equal(testResult.actual.toBinaryString(), '1');
-            assert.equal(testResult.expect.toBinaryString(), '0');
+            assert.equal(testResult.actual.getBinary().toBinaryString(), '1');
+            assert.equal(testResult.expect.getBinary().toBinaryString(), '0');
         });
 
         it('Test check error in loop', async () => {
@@ -243,8 +243,8 @@ describe('UnitTestController Test', () => {
             assert.equal(testResult.pass, false);
             assert.equal(testResult.lineIdx, 9);
             assert.equal(testResult.portName, '{Cout, S}');
-            assert.equal(testResult.actual.toBinaryString(), '1');  // 0b1
-            assert.equal(testResult.expect.toBinaryString(), '10'); // 0b10
+            assert.equal(testResult.actual.getBinary().toBinaryString(), '1');  // 0b1
+            assert.equal(testResult.expect.getBinary().toBinaryString(), '10'); // 0b10
         });
 
         it('Test input data syntax error', async () => {

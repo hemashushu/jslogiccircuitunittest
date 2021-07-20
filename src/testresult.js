@@ -7,8 +7,8 @@ class TestResult {
         // 仅当 pass 的值为 false 时，才有下列属性。
         this.lineIdx = lineIdx;
         this.portName = portName;
-        this.actual = actual;
-        this.expect = expect;
+        this.actual = actual; // 实际的信号，一个 Signal 对象。
+        this.expect = expect; // 预期的信号，一个 Signal 对象。
 
         // 当测试有异常时才有下列属性。
         //

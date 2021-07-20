@@ -307,8 +307,17 @@ describe('ScriptParse test', () => {
                 new DataCellItem(DataCellItemType.arithmetic, 'x')
             ]));
 
-            let { dataRowItem: dataRowItem4 } = DataRowParser.parseLine(0, '(log2(100)+1) 0b0011 (a + 0xaacc + abs(b)) 1');
+            let { dataRowItem: dataRowItem4 } = DataRowParser.parseLine(0, '1 0 z "z" (z)');
             assert(ObjectUtils.arrayEquals(dataRowItem4.dataCellItems, [
+                new DataCellItem(DataCellItemType.number, 1),
+                new DataCellItem(DataCellItemType.number, 0),
+                new DataCellItem(DataCellItemType.highZ),
+                new DataCellItem(DataCellItemType.string, 'z'),
+                new DataCellItem(DataCellItemType.arithmetic, 'z')
+            ]));
+
+            let { dataRowItem: dataRowItem5 } = DataRowParser.parseLine(0, '(log2(100)+1) 0b0011 (a + 0xaacc + abs(b)) 1');
+            assert(ObjectUtils.arrayEquals(dataRowItem5.dataCellItems, [
                 new DataCellItem(DataCellItemType.arithmetic, 'log2(100)+1'),
                 new DataCellItem(DataCellItemType.number, 0b0011),
                 new DataCellItem(DataCellItemType.arithmetic, 'a + 0xaacc + abs(b)'),

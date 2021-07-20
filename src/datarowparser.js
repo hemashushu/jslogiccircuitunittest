@@ -303,6 +303,9 @@ class DataRowParser {
             // 算术表达式
             let cellTextContent = cellText.substring(1, cellText.length - 1);
             return DataRowParser.convertToArithmeticDataCellItem(cellTextContent);
+        } else if (cellText === 'z') {
+            // 高阻抗
+            return DataRowParser.convertToHighZDataCellItem();
         } else if (cellText === 'x') {
             // 忽略值
             return DataRowParser.convertToIgnoreDataCellItem();
@@ -340,6 +343,10 @@ class DataRowParser {
 
     static convertToArithmeticDataCellItem(cellTextContent) {
         return new DataCellItem(DataCellItemType.arithmetic, cellTextContent);
+    }
+
+    static convertToHighZDataCellItem() {
+        return new DataCellItem(DataCellItemType.highZ);
     }
 
     static convertToIgnoreDataCellItem() {

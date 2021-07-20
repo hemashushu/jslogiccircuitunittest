@@ -31,7 +31,7 @@ describe('ModuleUnitTestController Test', () => {
             ['1_bit_2_pin', '1_bit_2_pin.failed', '1_bit_3_pin', '2_bit_2_pin']));
     });
 
-    it('Test module all unit test scripts', async () => {
+    it('Test module "NAND" all unit test scripts', async () => {
         let testDirectory = __dirname;
         let sampleLogicPackageRepositoryDirectory = path.join(testDirectory, 'resources', 'package-repository-3');
 
@@ -63,7 +63,31 @@ describe('ModuleUnitTestController Test', () => {
 
         let failedTestResult = failedItems[0].testResult;
         assert.equal(failedTestResult.lineIdx, 7);
-        assert.equal(failedTestResult.actual.toBinaryString(), '0');
-        assert.equal(failedTestResult.expect.toBinaryString(), '1');
+        assert.equal(failedTestResult.actual.getBinary().toBinaryString(), '0');
+        assert.equal(failedTestResult.expect.getBinary().toBinaryString(), '1');
+    });
+
+    it('Test module "Driver" all unit test scripts', async () => {
+        let testDirectory = __dirname;
+        let sampleLogicPackageRepositoryDirectory = path.join(testDirectory, 'resources', 'package-repository-3');
+
+        let packageRepositoryManager1 = new PackageRepositoryManager();
+        packageRepositoryManager1.addRepositoryDirectory(sampleLogicPackageRepositoryDirectory, false);
+
+        let packageItem = await LogicPackageLoader.loadLogicPackage(
+            packageRepositoryManager1, 'package-for-unit-test');
+
+        let moduleUnitTestResult = await ModuleUnitTestController.testModule(
+            packageItem.name, 'driver');
+
+        let unitTestResults = moduleUnitTestResult.unitTestResults;
+
+        let successfulItems = unitTestResults.filter(item => item.testResult.pass);
+        let successfulScriptNames = successfulItems.map(item => item.scriptName);
+        successfulScriptNames.sort();
+
+        assert(ObjectUtils.arrayEquals(
+            successfulScriptNames,
+            ['1_bit']));
     });
 });
