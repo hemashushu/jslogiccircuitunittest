@@ -1,4 +1,5 @@
 const { Signal } = require('jslogiccircuit');
+const { Binary } = require('jsbinary');
 
 const AbstractTestPin = require('./abstracttestpin');
 
@@ -25,37 +26,50 @@ class SliceTestPin extends AbstractTestPin {
     }
 
     setSignal(signal) {
-        let binary = signal.getBinary();
+        let {binary, highZ} = signal.getState();
 
-        let lastSignal = this._pin.getSignal();
-        let lastBinary = lastSignal.getBinary();
+        let lastState = this._pin.getSignal().getState();
+        let lastBinary = lastState.binary;
+        let lastHighZ = lastState.highZ;
 
         let offset = 0;
         for (let idx = this.bitRanges.length - 1; idx >= 0; idx--) {
             let bitRange = this.bitRanges[idx];
             let partialBinary = binary.slice(offset, bitRange.getBitWidth());
+            let partialHighZ = highZ.slice(offset, bitRange.getBitWidth());
+
             lastBinary = lastBinary.splice(bitRange.bitLow, partialBinary);
+            lastHighZ = lastHighZ.splice(bitRange.bitLow, partialHighZ);
+
             offset += partialBinary.bitWidth;
         }
 
-        let resultSignal = Signal.createWithoutHighZ(this.bitWidth, lastBinary);
+        let resultSignal = Signal.create(this.bitWidth, lastBinary, lastHighZ);
         this._pin.setSignal(resultSignal);
     }
 
     getSignal() {
-        let lastSignal = this._pin.getSignal();
-        let lastBinary = lastSignal.getBinary();
+        let lastState = this._pin.getSignal().getState();
+        let lastBinary = lastState.binary;
+        let lastHighZ = lastState.highZ;
 
-        let binary = Binary.fromBinaryString('0', this.bitWidth);
+        let binary = Binary.fromInt32(0, this.bitWidth);
+        let highZ = Binary.fromInt32(0, this.bitWidth);
+
         let offset = 0;
         for (let idx = this.bitRanges.length - 1; idx >= 0; idx--) {
             let bitRange = this.bitRanges[idx];
+
             let partialBinary = lastBinary.slice(bitRange.bitLow, bitRange.getBitWidth());
+            let partialHighZ = lastHighZ.slice(bitRange.bitLow, bitRange.getBitWidth());
+
             binary = binary.splice(offset, partialBinary);
+            highZ = highZ.splice(offset, partialHighZ);
+
             offset += partialBinary.bitWidth;
         }
 
-        return Signal.createWithoutHighZ(this.bitWidth, binary);
+        return Signal.create(this.bitWidth, binary, highZ);
     }
 
     static getBitRangesBitWidth(bitRanges) {

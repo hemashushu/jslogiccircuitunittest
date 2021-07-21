@@ -88,6 +88,6 @@ describe('ModuleUnitTestController Test', () => {
 
         assert(ObjectUtils.arrayEquals(
             successfulScriptNames,
-            ['1_bit']));
+            ['1_bit', '3_bit', '4_bit']));
     });
 });

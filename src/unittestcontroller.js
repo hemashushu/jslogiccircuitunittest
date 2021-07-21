@@ -358,7 +358,7 @@ class UnitTestController {
         // string:      "high-low"
         // uint8 array: 'h-i-g-h-l-o-w'
 
-        let data = Binary.fromBinaryString('0', bitWidth);
+        let data = Binary.fromInt32(0, bitWidth);
         let bytes = Math.ceil(bitWidth / 4);
         let count = uint8Array.length; //byteLength;
         if (count > bytes) {

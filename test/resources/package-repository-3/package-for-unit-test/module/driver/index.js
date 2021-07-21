@@ -16,7 +16,7 @@ class Driver extends SimpleLogicModule {
         this.pinOut = this.addPin('out', bitWidth, PinDirection.output);
 
         // 创建一些常量
-        this.signalHigh = Signal.createHigh(bitWidth);
+        this.signalHigh = Signal.createHigh(1);
         this.signalHighZ = Signal.createHighZ(bitWidth);
     }
 

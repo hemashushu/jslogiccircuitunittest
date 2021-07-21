@@ -25,30 +25,36 @@ class CombinedTestPin extends AbstractTestPin {
     setSignal(signal) {
         let offset = 0;
 
-        let binary = signal.getBinary();
-        for (let idx = this.childTestPins.length - 1; idx >= 0; idx--) {
-            let testPin = this.childTestPins[idx];
-            let partialBinary = binary.slice(offset, testPin.bitWidth);
+        let {binary, highZ} = signal.getState();
 
-            let signal = Signal.createWithoutHighZ(testPin.bitWidth, partialBinary);
-            testPin.setSignal(signal);
-            offset += testPin.bitWidth;
+        for (let idx = this.childTestPins.length - 1; idx >= 0; idx--) {
+            let childTestPin = this.childTestPins[idx];
+            let partialBinary = binary.slice(offset, childTestPin.bitWidth);
+            let partialHighZ = highZ.slice(offset, childTestPin.bitWidth);
+
+            let signal = Signal.create(childTestPin.bitWidth, partialBinary, partialHighZ);
+            childTestPin.setSignal(signal);
+            offset += childTestPin.bitWidth;
         }
     }
 
     getSignal() {
-        let binary = Binary.fromBinaryString('0', this.bitWidth);
+        let binary = Binary.fromInt32(0, this.bitWidth);
+        let highZ = Binary.fromInt32(0, this.bitWidth);
+
         let offset = 0;
 
         for (let idx = this.childTestPins.length - 1; idx >= 0; idx--) {
-            let testPin = this.childTestPins[idx];
-            let signal = testPin.getSignal();
-            let partialBinary = signal.getBinary();
-            binary = binary.splice(offset, partialBinary);
-            offset += partialBinary.bitWidth;
+            let childTestPin = this.childTestPins[idx];
+            let state = childTestPin.getSignal().getState();
+
+            binary = binary.splice(offset, state.binary);
+            highZ = highZ.splice(offset, state.highZ);
+
+            offset += childTestPin.bitWidth;
         }
 
-        return Signal.createWithoutHighZ(this.bitWidth, binary);
+        return Signal.create(this.bitWidth, binary, highZ);
     }
 
     static getPinsBitWidth(testPins) {

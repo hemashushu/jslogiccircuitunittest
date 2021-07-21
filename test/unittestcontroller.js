@@ -243,8 +243,8 @@ describe('UnitTestController Test', () => {
             assert.equal(testResult.pass, false);
             assert.equal(testResult.lineIdx, 9);
             assert.equal(testResult.portName, '{Cout, S}');
-            assert.equal(testResult.actual.getBinary().toBinaryString(), '1');  // 0b1
-            assert.equal(testResult.expect.getBinary().toBinaryString(), '10'); // 0b10
+            assert.equal(testResult.actual.getBinary().toBinaryString(), '01');  // 0b01
+            assert.equal(testResult.expect.getBinary().toBinaryString(), '10');  // 0b10
         });
 
         it('Test input data syntax error', async () => {
