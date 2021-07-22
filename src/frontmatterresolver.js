@@ -17,6 +17,17 @@ const ParseErrorCode = require('./parseerrorcode');
  * binary(file:file_name.bin)
  */
 class FrontMatterResolver {
+
+    /**
+     *
+     * - 如果文件内容为空或者无实际数据，会抛出 ScriptParseException。
+     * - 如果文件不存在，则抛出 FileNotFoundException 异常。
+     * - 如果读取文件失败，则抛出 IOException 异常。
+     *
+     * @param {*} frontMatter
+     * @param {*} scriptFilePath
+     * @returns
+     */
     static async resolve(frontMatter, scriptFilePath) {
         let resolvedFrontMatter = {};
 
@@ -68,10 +79,12 @@ class FrontMatterResolver {
     }
 
     /**
+     * - 如果文件内容为空或者无实际数据，会抛出 ScriptParseException。
+     * - 如果文件不存在，则抛出 FileNotFoundException 异常。
+     * - 如果读取文件失败，则抛出 IOException 异常。
      *
      * @param {*} sourceFilePath
      * @returns 一个数据对象或者数据数组，
-     *     - 如果文件不存在或者文件内容为空，则返回 undefined.
      */
     static async loadObjectValue(sourceFilePath) {
         let fileConfig = new YAMLFileConfig();
@@ -94,11 +107,10 @@ class FrontMatterResolver {
     }
 
     /**
-     *
+     * - 如果文件不存在，则抛出 FileNotFoundException 异常。
+     * - 如果读取文件失败，则抛出 IOException 异常。
      * @param {*} sourceFilePath
      * @returns Nodejs 的 Buffer 对象
-     *     - 如果文件不存在，则抛出 FileNotFoundException 异常。
-     *     - 如果读取文件失败，则抛出 IOException 异常。
      */
     static async loadBinaryValue(sourceFilePath) {
         // https://nodejs.org/api/fs.html#fs_fspromises_readfile_path_options
