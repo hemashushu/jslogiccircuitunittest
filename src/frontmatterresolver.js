@@ -62,7 +62,7 @@ class FrontMatterResolver {
 
         if (sourceType === 'object') {
             return await FrontMatterResolver.loadObjectValue(sourceFilePath);
-        }else {
+        }else if(sourceType === 'binary') {
             return await FrontMatterResolver.loadBinaryValue(sourceFilePath);
         }
     }
@@ -77,8 +77,20 @@ class FrontMatterResolver {
         let fileConfig = new YAMLFileConfig();
         let promiseFileConfig = new PromiseFileConfig(fileConfig);
 
-        // 如果文件不存在或者文件内容为空，value 的值为 undefined
-        return await promiseFileConfig.load(sourceFilePath);
+        // 如果文件内容为空，value 的值为 undefined
+        // 如果文件无实际数据，value 的值为 null
+        let config = await promiseFileConfig.load(sourceFilePath);
+
+        if (config === undefined || config === null) {
+            throw new ScriptParseException(
+                `The front-matter object source file is empty.`,
+                new ParseErrorDetail(ParseErrorCode.emptyObjectSourceFile,
+                    'empty-object-source-file', undefined, undefined, {
+                        filePath: sourceFilePath
+                    }));
+        }
+
+        return config;
     }
 
     /**
