@@ -1,5 +1,6 @@
 const { Signal } = require('jslogiccircuit');
 const { Binary } = require('jsbinary');
+const { IllegalArgumentException } = require('jsexception');
 
 const AbstractTestPin = require('./abstracttestpin');
 
@@ -20,6 +21,14 @@ class SliceTestPin extends AbstractTestPin {
         // - ranges 的顺序跟脚本书写的顺序一致，即先写的
         //   范围（高位）先加入数组（索引值较小），后写的（低位）后加入
         //   数组（索引值较大）。
+
+        for (let bitRange of bitRanges) {
+            if (bitRange.bitHigh > pin.bitWidth ||
+                bitRange.bitLow < 0) {
+                throw new IllegalArgumentException(
+                    `Invalid slice bit range [${bitRange.bitHigh}:${bitRange.bitLow}] for pin: ${pin.name}[${pin.bitWidth}].`);
+            }
+        }
 
         this.bitRanges = bitRanges;
         this._pin = pin;

@@ -4,6 +4,10 @@ class AbstractTestPin extends AbstractWire {
     constructor(name, bitWidth, isInput) {
         super();
 
+        if (!(bitWidth >=1 && bitWidth <=32)) {
+            throw new IllegalArgumentException('Bit width out of range.');
+        }
+
         this.name = name;
         this.bitWidth = bitWidth;
 

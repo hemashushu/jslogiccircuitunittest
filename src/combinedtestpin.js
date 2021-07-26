@@ -16,9 +16,10 @@ class CombinedTestPin extends AbstractTestPin {
             isInput);
 
         // - childTestPins: [AbstractPortItem, ...] 数组
-        // - childTestPins 的顺序跟脚本书写的顺序一致，即先写
-        //   的范围（高位）先加入数组（索引值较小），后写的（低位）后加入
-        //   数组（索引值较大）。
+        // - childTestPins 的顺序跟脚本书写的顺序一致，即
+        //   先写的（高位）先加入数组（索引值较小），
+        //   后写的（低位）后加入数组（索引值较大）。
+
         this.childTestPins = childTestPins;
     }
 
