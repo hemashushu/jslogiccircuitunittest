@@ -9,7 +9,7 @@ const {
 const assert = require('assert/strict');
 
 describe('FrontMatterParser test', () => {
-    it('Test base', () => {
+    it('Test parsing key/value', () => {
         let fm1 = FrontMatterParser.parseLine(0, 'number: 123');
         assert(ObjectUtils.equals(fm1, { key: 'number', value: 123 }));
 
@@ -44,7 +44,7 @@ describe('FrontMatterParser test', () => {
         assert(ObjectUtils.equals(fm11, { key: 'quote string with comment', value: 'hello # world' }));
     });
 
-    it('Test exception', () => {
+    it('Test syntax error', () => {
         try {
             FrontMatterParser.parseLine(0, 'string with no ending quote: "Hello! World');
             assert.fail();

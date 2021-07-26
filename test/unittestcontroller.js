@@ -27,7 +27,7 @@ async function loadTestScript(scriptFileName) {
     return scriptItem1;
 }
 
-describe('UnitTestController Test', () => {
+describe('UnitTestController Test - successful cases', () => {
     before(async () => {
         // 加载逻辑包
         // 逻辑包使用 jslogiccircuit 项目所使用的测试资源
@@ -60,7 +60,9 @@ describe('UnitTestController Test', () => {
             'package-by-code',
             'and_gate',
             'title',
-            scriptItem1);
+            false,
+            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.name, scriptItem1.filePath);
 
         let unitTestResult1 = unitTestController1.test();
         assert.equal(unitTestResult1.title, 'title');
@@ -77,7 +79,9 @@ describe('UnitTestController Test', () => {
             'package-by-code',
             'and_gate_parameter',
             'title',
-            scriptItem1);
+            false,
+            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.name, scriptItem1.filePath);
 
         let { testResult } = unitTestController1.test();
         assert.equal(testResult.pass, true);
@@ -89,7 +93,9 @@ describe('UnitTestController Test', () => {
             'package-by-config',
             'half_adder',
             'title',
-            scriptItem1);
+            false,
+            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.name, scriptItem1.filePath);
 
         let { testResult } = unitTestController1.test();
         assert.equal(testResult.pass, true);
@@ -101,7 +107,9 @@ describe('UnitTestController Test', () => {
             'package-by-mix',
             'full_adder',
             'title',
-            scriptItem1);
+            false,
+            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.name, scriptItem1.filePath);
 
         let { testResult } = unitTestController1.test();
         assert.equal(testResult.pass, true);
@@ -113,212 +121,232 @@ describe('UnitTestController Test', () => {
             'package-by-mix',
             'four_bit_adder',
             'title',
-            scriptItem1);
+            false,
+            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.name, scriptItem1.filePath);
 
         let { testResult } = unitTestController1.test();
         assert.equal(testResult.pass, true);
     });
+});
 
-    describe('Test fail', () => {
-        it('Test construct error cause of package not found', async () => {
-            let scriptItem1 = await ScriptParser.parse(
-                'A B Q\n' +
-                '0 0 0');
+describe('UnitTestController Test - failed cases', () => {
+    it('Test construct error cause of package not found', async () => {
+        let scriptItem1 = await ScriptParser.parse(
+            'A B Q\n' +
+            '0 0 0');
 
-            try {
-                new UnitTestController(
-                    'no-this-package',
-                    'or_gate', 'title',
-                    scriptItem1);
+        try {
+            new UnitTestController(
+                'no-this-package',
+                'or_gate', 'title',
+                false,
+                scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+                scriptItem1.name, scriptItem1.filePath);
 
-                assert.fail();
-            } catch (e) {
-                assert(e instanceof LogicPackageNotFoundException);
-            }
-        });
+            assert.fail();
+        } catch (e) {
+            assert(e instanceof LogicPackageNotFoundException);
+        }
+    });
 
-        it('Test construct error cause of module not found', async () => {
-            let scriptItem1 = await ScriptParser.parse(
-                'A B Q\n' +
-                '0 0 0');
+    it('Test construct error cause of module not found', async () => {
+        let scriptItem1 = await ScriptParser.parse(
+            'A B Q\n' +
+            '0 0 0');
 
-            try {
-                new UnitTestController(
-                    'package-by-code',
-                    'or_gate_ext', 'title',
-                    scriptItem1);
-                assert.fail();
-            } catch (e) {
-                assert(e instanceof LogicModuleNotFoundException);
-            }
-        });
+        try {
+            new UnitTestController(
+                'package-by-code',
+                'or_gate_ext', 'title',
+                false,
+                scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+                scriptItem1.name, scriptItem1.filePath);
+            assert.fail();
+        } catch (e) {
+            assert(e instanceof LogicModuleNotFoundException);
+        }
+    });
 
-        it('Test construct error cause of module (in the port list) not found error', async () => {
-            let scriptItem1 = await ScriptParser.parse(
-                'A subModule.B Q\n' + // <-- not module named 'subModule'
-                '0 0 0');
+    it('Test construct error cause of module (in the port list) not found error', async () => {
+        let scriptItem1 = await ScriptParser.parse(
+            'A subModule.B Q\n' + // <-- not module named 'subModule'
+            '0 0 0');
 
-            try {
-                new UnitTestController(
-                    'package-by-code',
-                    'or_gate',
-                    'title',
-                    scriptItem1);
-                assert.fail();
-            } catch (e) {
-                assert(e instanceof ScriptParseException);
-                assert.equal(e.parseErrorDetail.code, ParseErrorCode.moduleNotFound);
-                assert.equal(e.parseErrorDetail.data.moduleName, 'subModule');
-            }
-        });
-
-        it('Test construct error cause of port (in the port list) not found error', async () => {
-            let scriptItem1 = await ScriptParser.parse(
-                'A B Out\n' + // <-- no port named 'Out'
-                '0 0 0');
-
-            try {
-                new UnitTestController(
-                    'package-by-code',
-                    'or_gate', 'title',
-                    scriptItem1);
-                assert.fail();
-            } catch (e) {
-                assert(e instanceof ScriptParseException);
-                assert.equal(e.parseErrorDetail.code, ParseErrorCode.portNotFound);
-                assert.equal(e.parseErrorDetail.data.portName, 'Out');
-            }
-        });
-
-        it('Test check error', async () => {
-            let scriptItem1 = await ScriptParser.parse(
-                'A B Q\n' +
-                '0 0 0\n' +
-                '0 1 1\n' +
-                '1 0 0\n' + // <-- line idx 3 check error
-                '1 1 1');
-
-            let unitTestController1 = new UnitTestController(
+        try {
+            new UnitTestController(
                 'package-by-code',
                 'or_gate',
                 'title',
-                scriptItem1);
-
-            let { testResult } = unitTestController1.test();
-
-            assert.equal(testResult.pass, false);
-            assert.equal(testResult.lineIdx, 3);
-            assert.equal(testResult.portName, 'Q');
-            assert.equal(testResult.actual.getBinary().toBinaryString(), '1');
-            assert.equal(testResult.expect.getBinary().toBinaryString(), '0');
-        });
-
-        it('Test check error in loop', async () => {
-            let scriptItem1 = await ScriptParser.parse(
-                'A B Cin {Cout, S}\n' +
-                '0 0 0   0\n' +
-                '0 1 0   1\n' +
-                '1 0 0   1\n' +
-                '1 1 0   2\n' +
-                '\n' +
-                'for(i,0,1)\n' +
-                '  for(j,0,1)\n' +
-                '    i j 0 (i+j)\n' +
-                '    i j 1 (i+j+2)\n' + // <-- line idx 9
-                '  end\n' +
-                'end\n' +
-                '\n' +
-                '0 0 1   1\n' +
-                '0 1 1   2\n' +
-                '1 0 1   2\n' +
-                '1 1 1   3');
-
-            let unitTestController1 = new UnitTestController(
-                'package-by-mix',
-                'full_adder',
-                'title',
-                scriptItem1);
-
-            let { testResult } = unitTestController1.test();
-            assert.equal(testResult.pass, false);
-            assert.equal(testResult.lineIdx, 9);
-            assert.equal(testResult.portName, '{Cout, S}');
-            assert.equal(testResult.actual.getBinary().toBinaryString(), '01');  // 0b01
-            assert.equal(testResult.expect.getBinary().toBinaryString(), '10');  // 0b10
-        });
-
-        it('Test input data syntax error', async () => {
-            let scriptItem1 = await ScriptParser.parse(
-                'A B Q\n' +
-                '0 0 0\n' +
-                'x 1 1\n' +  // <-- line idx 2 input data syntax error (wildcard is not allowed for input port)
-                '1 0 1\n' +
-                '1 1 1');
-
-            let unitTestController1 = new UnitTestController(
-                'package-by-code',
-                'or_gate',
-                'title',
-                scriptItem1);
-
-            let {testResult} = unitTestController1.test();
-            let e = testResult.exception;
-
+                false,
+                scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+                scriptItem1.name, scriptItem1.filePath);
+            assert.fail();
+        } catch (e) {
             assert(e instanceof ScriptParseException);
-            assert.equal(e.parseErrorDetail.code, ParseErrorCode.syntaxError);
-            assert.equal(e.parseErrorDetail.messageId, 'wildcard-asterisk-syntax-error');
-            assert.equal(e.parseErrorDetail.lineIdx, 2);
-            assert.equal(e.parseErrorDetail.data.portName, 'A');
-        });
+            assert.equal(e.parseErrorDetail.code, ParseErrorCode.moduleNotFound);
+            assert.equal(e.parseErrorDetail.data.moduleName, 'subModule');
+        }
+    });
 
-        it('Test arithmetic syntax error', async () => {
-            let scriptItem1 = await ScriptParser.parse(
-                'A B Q\n' +
-                '0 0 0\n' +
-                '0 1 1\n' +
-                '1 0 (1++1)\n' + // <-- line idx 3 arithmetic syntax error
-                '1 1 1');
+    it('Test construct error cause of port (in the port list) not found error', async () => {
+        let scriptItem1 = await ScriptParser.parse(
+            'A B Out\n' + // <-- no port named 'Out'
+            '0 0 0');
 
-            let unitTestController1 = new UnitTestController(
+        try {
+            new UnitTestController(
                 'package-by-code',
-                'or_gate',
-                'title',
-                scriptItem1);
-
-
-            let {testResult} = unitTestController1.test();
-            let e = testResult.exception;
-
+                'or_gate', 'title',
+                false,
+                scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+                scriptItem1.name, scriptItem1.filePath);
+            assert.fail();
+        } catch (e) {
             assert(e instanceof ScriptParseException);
-            assert.equal(e.parseErrorDetail.code, ParseErrorCode.syntaxError);
-            assert.equal(e.parseErrorDetail.messageId, 'arithmetic-syntax-error');
-            assert.equal(e.parseErrorDetail.lineIdx, 3);
-            assert.equal(e.parseErrorDetail.data.text, '1++1');
-        });
+            assert.equal(e.parseErrorDetail.code, ParseErrorCode.portNotFound);
+            assert.equal(e.parseErrorDetail.data.portName, 'Out');
+        }
+    });
 
-        it('Test arithmetic evaluate error', async () => {
-            let scriptItem1 = await ScriptParser.parse(
-                'A B Q\n' +
-                '0 0 0\n' +
-                '0 1 (a+b)\n' +  // <-- line idx 2 arithmetic syntax error
-                '1 0 1\n' +
-                '1 1 1');
+    it('Test check error', async () => {
+        let scriptItem1 = await ScriptParser.parse(
+            'A B Q\n' +
+            '0 0 0\n' +
+            '0 1 1\n' +
+            '1 0 0\n' + // <-- line idx 3 check error
+            '1 1 1');
 
-            let unitTestController1 = new UnitTestController(
-                'package-by-code',
-                'or_gate',
-                'title',
-                scriptItem1);
+        let unitTestController1 = new UnitTestController(
+            'package-by-code',
+            'or_gate',
+            'title',
+            false,
+            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.name, scriptItem1.filePath);
+
+        let { testResult } = unitTestController1.test();
+
+        assert.equal(testResult.pass, false);
+        assert.equal(testResult.lineIdx, 3);
+        assert.equal(testResult.portName, 'Q');
+        assert.equal(testResult.actual.getBinary().toBinaryString(), '1');
+        assert.equal(testResult.expect.getBinary().toBinaryString(), '0');
+    });
+
+    it('Test check error in loop', async () => {
+        let scriptItem1 = await ScriptParser.parse(
+            'A B Cin {Cout, S}\n' +
+            '0 0 0   0\n' +
+            '0 1 0   1\n' +
+            '1 0 0   1\n' +
+            '1 1 0   2\n' +
+            '\n' +
+            'for(i,0,1)\n' +
+            '  for(j,0,1)\n' +
+            '    i j 0 (i+j)\n' +
+            '    i j 1 (i+j+2)\n' + // <-- line idx 9
+            '  end\n' +
+            'end\n' +
+            '\n' +
+            '0 0 1   1\n' +
+            '0 1 1   2\n' +
+            '1 0 1   2\n' +
+            '1 1 1   3');
+
+        let unitTestController1 = new UnitTestController(
+            'package-by-mix',
+            'full_adder',
+            'title',
+            false,
+            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.name, scriptItem1.filePath);
+
+        let { testResult } = unitTestController1.test();
+        assert.equal(testResult.pass, false);
+        assert.equal(testResult.lineIdx, 9);
+        assert.equal(testResult.portName, '{Cout, S}');
+        assert.equal(testResult.actual.getBinary().toBinaryString(), '01');  // 0b01
+        assert.equal(testResult.expect.getBinary().toBinaryString(), '10');  // 0b10
+    });
+
+    it('Test input data syntax error', async () => {
+        let scriptItem1 = await ScriptParser.parse(
+            'A B Q\n' +
+            '0 0 0\n' +
+            'x 1 1\n' +  // <-- line idx 2 input data syntax error (wildcard is not allowed for input port)
+            '1 0 1\n' +
+            '1 1 1');
+
+        let unitTestController1 = new UnitTestController(
+            'package-by-code',
+            'or_gate',
+            'title',
+            false,
+            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.name, scriptItem1.filePath);
+
+        let { testResult } = unitTestController1.test();
+        let e = testResult.exception;
+
+        assert(e instanceof ScriptParseException);
+        assert.equal(e.parseErrorDetail.code, ParseErrorCode.syntaxError);
+        assert.equal(e.parseErrorDetail.messageId, 'wildcard-asterisk-syntax-error');
+        assert.equal(e.parseErrorDetail.lineIdx, 2);
+        assert.equal(e.parseErrorDetail.data.portName, 'A');
+    });
+
+    it('Test arithmetic syntax error', async () => {
+        let scriptItem1 = await ScriptParser.parse(
+            'A B Q\n' +
+            '0 0 0\n' +
+            '0 1 1\n' +
+            '1 0 (1++1)\n' + // <-- line idx 3 arithmetic syntax error
+            '1 1 1');
+
+        let unitTestController1 = new UnitTestController(
+            'package-by-code',
+            'or_gate',
+            'title',
+            false,
+            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.name, scriptItem1.filePath);
 
 
-            let {testResult} = unitTestController1.test();
-            let e = testResult.exception;
+        let { testResult } = unitTestController1.test();
+        let e = testResult.exception;
 
-            assert(e instanceof ScriptParseException);
-            assert.equal(e.parseErrorDetail.code, ParseErrorCode.evaluateError);
-            assert.equal(e.parseErrorDetail.messageId, 'arithmetic-evaluating-error');
-            assert.equal(e.parseErrorDetail.lineIdx, 2);
-            assert.equal(e.parseErrorDetail.data.text, 'a+b');
-        });
+        assert(e instanceof ScriptParseException);
+        assert.equal(e.parseErrorDetail.code, ParseErrorCode.syntaxError);
+        assert.equal(e.parseErrorDetail.messageId, 'arithmetic-syntax-error');
+        assert.equal(e.parseErrorDetail.lineIdx, 3);
+        assert.equal(e.parseErrorDetail.data.text, '1++1');
+    });
+
+    it('Test arithmetic evaluate error', async () => {
+        let scriptItem1 = await ScriptParser.parse(
+            'A B Q\n' +
+            '0 0 0\n' +
+            '0 1 (a+b)\n' +  // <-- line idx 2 arithmetic syntax error
+            '1 0 1\n' +
+            '1 1 1');
+
+        let unitTestController1 = new UnitTestController(
+            'package-by-code',
+            'or_gate',
+            'title',
+            false,
+            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.name, scriptItem1.filePath);
+
+
+        let { testResult } = unitTestController1.test();
+        let e = testResult.exception;
+
+        assert(e instanceof ScriptParseException);
+        assert.equal(e.parseErrorDetail.code, ParseErrorCode.evaluateError);
+        assert.equal(e.parseErrorDetail.messageId, 'arithmetic-evaluating-error');
+        assert.equal(e.parseErrorDetail.lineIdx, 2);
+        assert.equal(e.parseErrorDetail.data.text, 'a+b');
     });
 });

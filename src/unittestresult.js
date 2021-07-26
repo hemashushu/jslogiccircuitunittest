@@ -1,8 +1,8 @@
 class UnitTestResult {
-    constructor(scriptName, scriptFilePath, title, testResult) {
+    constructor(title, scriptName, scriptFilePath, testResult) {
+        this.title = title;
         this.scriptName = scriptName;
         this.scriptFilePath = scriptFilePath;
-        this.title = title;
         this.testResult = testResult;
     }
 }

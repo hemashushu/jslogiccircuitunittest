@@ -18,7 +18,7 @@ const SCRIPT_FILE_EXTENSION_NAME = '.test.txt';
 
 class ScriptParser {
     /**
-     *
+     * - 如果 YAML 对象文件解析失败，会抛出 ParseException。
      * - 如果脚本有语法错误，会抛出 ScriptParseException 异常。
      * - 如果参数外部文件不存在，则抛出 FileNotFoundException 异常。
      * - 如果参数外部文件读取失败，则抛出 IOException 异常。
@@ -39,7 +39,7 @@ class ScriptParser {
     }
 
     /**
-     *
+     * - 如果 YAML 对象文件解析失败，会抛出 ParseException。
      * - 如果脚本有语法错误，会抛出 ScriptParseException 异常。
      * - 如果参数外部文件不存在，则抛出 FileNotFoundException 异常。
      * - 如果参数外部文件读取失败，则抛出 IOException 异常。
@@ -49,7 +49,7 @@ class ScriptParser {
      * @param {*} scriptFilePath 脚本的本地文件路径，可选
      * @returns ScriptItem 对象
      */
-    static async parse(textContent, scriptName, scriptFilePath) {
+    static async parse(textContent, scriptName = '', scriptFilePath = '') {
         let frontMatterItems = []; // [{key:..., value:...},...]
         let portItems;
 
@@ -157,18 +157,15 @@ class ScriptParser {
 
         let frontMatter = ObjectUtils.collapseKeyValueArray(frontMatterItems, 'key', 'value');
 
-        // 解析诸如的头信息值：
-        // object(file:file_name.yaml)
-        // binary(file:file_name.bin)
-        // - 如果文件内容为空或者无实际数据，会抛出 ScriptParseException。
-        // - 如果文件不存在，则抛出 FileNotFoundException 异常。
-        // - 如果读取文件失败，则抛出 IOException 异常。
-        let resolvedFrontMatter = await FrontMatterResolver.resolve(frontMatter, scriptFilePath);
+        // 提取头信息（Front-Matter）的 "属性" 和 "配置参数"
+        let externalFileDirectory = path.dirname(scriptFilePath);
+        let {attributes, configParameters} = await FrontMatterResolver.resolve(frontMatter, externalFileDirectory);
 
         let scriptItem = new ScriptItem(scriptName,
             scriptFilePath,
-            resolvedFrontMatter,
+            attributes, configParameters,
             portItems, rootDataRowItem.childDataRowItems);
+
         return scriptItem;
     }
 }

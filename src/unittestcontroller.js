@@ -16,7 +16,7 @@ const ScriptParseException = require('./scriptparseexception');
 const SlicePortItem = require('./sliceportitem');
 const SliceTestPin = require('./slicetestpin');
 const TestPin = require('./testpin');
-const TestResult = require('./testresult');
+const DataTestResult = require('./datatestresult');
 const UnitTestResult = require('./unittestresult');
 
 class UnitTestController {
@@ -30,31 +30,22 @@ class UnitTestController {
      * @param {*} packageName
      * @param {*} moduleClassName
      */
-    constructor(packageName, moduleClassName, title, scriptItem) {
+    constructor(packageName, moduleClassName,
+        title,
+        seqMode,
+        portItems, dataRowItems, configParameters,
+        scriptName, scriptFilePath
+        ) {
 
         this.title = title; // 单元测试的标题
-        this.scriptName = scriptItem.name; // 测试脚本的名称（即不带扩展名的文件名）
-        this.scriptFilePath = scriptItem.scriptFilePath;
-        this.dataRowItems = scriptItem.dataRowItems; // 待测试的数据
+        this.seqMode = seqMode; // 时序模式标记
+        this.dataRowItems = dataRowItems; // 待测试的数据
 
-        let frontMatter = scriptItem.frontMatter;
-        let portItems = scriptItem.portItems;
-
-        // 时序模式标记
-        this.seqMode = (frontMatter['!seq'] === true);
-
-        // 构造模块测试参数
-        let parameters = {};
-        for (let key in frontMatter) {
-            if (key.startsWith('!')) {
-                continue;
-            }
-
-            parameters[key] = frontMatter[key];
-        }
+        this.scriptName = scriptName; // 测试脚本的名称（即不带扩展名的文件名）
+        this.scriptFilePath = scriptFilePath;
 
         let logicModule = LogicModuleFactory.createModuleInstance(
-            packageName, moduleClassName, 'unitTestlogicModule', parameters);
+            packageName, moduleClassName, 'unitTestlogicModule', configParameters);
 
         // 构造端口读写列表
         this.testPins = this.generateTestPins(logicModule, portItems);
@@ -198,22 +189,24 @@ class UnitTestController {
      * @returns
      */
     test() {
-        let groupTestResult;
+        let dataTestResult;
 
         try{
             let variableContext = {};
-            groupTestResult = this.testDataRowItems(
+            dataTestResult = this.testDataRowItems(
                 this.dataRowItems, variableContext, undefined, 0, 0);
 
         }catch(err){
-            groupTestResult = new TestResult(false,
+            // 构建一个测试结果为异常对象的 DataTestResult 对象。
+            dataTestResult = new DataTestResult(false,
                 undefined, undefined, undefined, undefined,
                 err);
         }
 
         return new UnitTestResult(
-            this.scriptName, this.scriptFilePath, this.title,
-            groupTestResult);
+            this.title,
+            this.scriptName, this.scriptFilePath,
+            dataTestResult);
     }
 
     /**
@@ -228,7 +221,7 @@ class UnitTestController {
      * @param {*} variableName
      * @param {*} fromValue
      * @param {*} toValue
-     * @returns TestResult. 对象的结构为： {pass, lineIdx}
+     * @returns DataTestResult. 对象的结构为： {pass, lineIdx}
      *     - 如果测试通过，则返回 {pass: true}，
      *     - 如果测试不通过，则返回 {pass: false,
      *           lineIdx: Number, portName: String,
@@ -299,7 +292,7 @@ class UnitTestController {
                         let actualSignal = testPin.getSignal();
 
                         if (!Signal.equal(actualSignal, expectSignal)) {
-                            return new TestResult(false,
+                            return new DataTestResult(false,
                                 lineIdx, testPin.name,
                                 actualSignal, expectSignal);
                         }
@@ -338,7 +331,7 @@ class UnitTestController {
             }
         }
 
-        return new TestResult(true); // pass
+        return new DataTestResult(true); // pass
     }
 
     static convertStringToBinary(text, bitWidth) {

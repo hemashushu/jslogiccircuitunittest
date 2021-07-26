@@ -8,7 +8,7 @@ const { ModuleUnitTestController } = require('../index');
 const assert = require('assert/strict');
 
 describe('ModuleUnitTestController Test', () => {
-    it('Test load unit test items', async () => {
+    it('Test loading unit test script items', async () => {
         let testDirectory = __dirname;
         let sampleLogicPackageRepositoryDirectory = path.join(testDirectory, 'resources', 'package-repository-3');
 

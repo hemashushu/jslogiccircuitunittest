@@ -10,7 +10,7 @@ const {
 const assert = require('assert/strict');
 
 describe('DataRowParser test', () => {
-    it('Test data row', () => {
+    it('Test parsing data row', () => {
         let { dataRowItem: dataRowItem1 } = DataRowParser.parseLine(0, '0 1 0 1 0b1100 0xff00');
         assert.equal(dataRowItem1.type, DataRowItemType.data);
         assert(ObjectUtils.arrayEquals(dataRowItem1.dataCellItems, [

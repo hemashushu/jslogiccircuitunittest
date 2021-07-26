@@ -8,13 +8,19 @@ const { LogicPackageLoader, LogicModuleLoader, PackageResourceLocator } = requir
 const ScriptParser = require('./scriptparser');
 const UnitTestController = require('./unittestcontroller');
 const UnitTestResult = require('./unittestresult');
-const TestResult = require('./testresult');
+const DataTestResult = require('./datatestresult');
 const ModuleUnitTestResult = require('./moduleunittestresult');
 
 class ModuleUnitTestController {
     /**
      * - 如果指定的逻辑包或者逻辑模块找不到，会抛出 IllegalArgumentException 异常。
+     *
+     * 解析脚本可能会抛出的异常：
+     * - 如果 YAML 对象文件解析失败，会抛出 ParseException。
      * - 如果脚本有语法错误，会抛出 ScriptParseException 异常。
+     * - 如果参数外部文件不存在，则抛出 FileNotFoundException 异常。
+     * - 如果参数外部文件读取失败，则抛出 IOException 异常。
+     *
      * @param {*} packageName
      * @param {*} moduleClassName
      * @returns
@@ -61,7 +67,12 @@ class ModuleUnitTestController {
     /**
      *
      * - 如果指定的逻辑包或者逻辑模块找不到，会抛出 IllegalArgumentException 异常。
-     * - 脚本文件有语法错误时抛出 ScriptParseException 异常。
+     *
+     * 解析脚本可能会抛出的异常：
+     * - 如果 YAML 对象文件解析失败，会抛出 ParseException。
+     * - 如果脚本有语法错误，会抛出 ScriptParseException 异常。
+     * - 如果参数外部文件不存在，则抛出 FileNotFoundException 异常。
+     * - 如果参数外部文件读取失败，则抛出 IOException 异常。
      *
      * @param {*} packageName
      * @param {*} moduleClassName
@@ -80,11 +91,13 @@ class ModuleUnitTestController {
             // 标题被写到 Front-Matter 的 "!title" 属性里，如果
             // 不存在该属性，则使用脚本文件的名称（即不带扩展名的文件名）作为标题。
 
-            let frontMatter = scriptItem.frontMatter;
-            let title = LocaleProperty.getValue(frontMatter, '!title', localeCode);
+            let attributes = scriptItem.attributes;
+            let title = LocaleProperty.getValue(attributes, 'title', localeCode);
             if (title === undefined) {
                 title = scriptItem.name;
             }
+
+            let seqMode = (attributes['seq'] === true);
 
             let unitTestResult;
 
@@ -92,22 +105,25 @@ class ModuleUnitTestController {
                 // - 如果逻辑包或者逻辑模块找不到，则抛出 IllegalArgumentException 异常。
                 // - 如果**脚本里的**端口列表指定的端口或者子模块找不到，则抛出 ScriptParseException 异常。
                 let unitTestController = new UnitTestController(
-                    packageName, moduleClassName, title,
-                    scriptItem);
+                    packageName, moduleClassName, title, seqMode,
+                    scriptItem.portItems, scriptItem.dataRowItems, scriptItem.configParameters,
+                    scriptItem.name, scriptItem.filePath);
 
                 unitTestResult = unitTestController.test();
 
             }catch(err) {
-                // 构造一个结果为异常的 TestResult 对象。
-                let testResult = new TestResult(false,
+                // 构造一个结果为异常的 DataTestResult 对象。
+                let dataTestResult = new DataTestResult(false,
                     undefined, undefined, undefined, undefined, err);
 
                 let scriptName = scriptItem.name;
-                let scriptFilePath = scriptItem.scriptFilePath;
+                let scriptFilePath = scriptItem.filePath;
 
+                // 构造 UnitTestResult 对象。
                 unitTestResult = new UnitTestResult(
-                    scriptName, scriptFilePath, title,
-                    testResult);
+                    title,
+                    scriptName, scriptFilePath,
+                    dataTestResult);
             }
 
             unitTestResults.push(unitTestResult);

@@ -13,7 +13,7 @@ const {
 const assert = require('assert/strict');
 
 describe('PortListParser test', () => {
-    it('Test base', () => {
+    it('Test parsing port names', () => {
         // 多个端口
         let portItems1 = PortListParser.parse(0, 'A B Q');
         assert.equal(portItems1.length, 3);
@@ -79,7 +79,7 @@ describe('PortListParser test', () => {
             ]));
     });
 
-    it('Test name path', () => {
+    it('Test parsing name path', () => {
         let portItems10 = PortListParser.parse(0, 'A.B.C');
         assert.equal(portItems10.length, 1);
         assert(ObjectUtils.objectEquals(portItems10[0], new PortItem('A.B.C')));
@@ -133,7 +133,7 @@ describe('PortListParser test', () => {
         ]));
     });
 
-    it('Test exception', () => {
+    it('Test syntax error', () => {
         try {
             PortListParser.parse(0, 'A.');
             assert.fail();

@@ -6,7 +6,9 @@ const DataRowItem = require('./src/datarowitem');
 const DataRowItemType = require('./src/datarowitemtype');
 const DataRowParser = require('./src/datarowparser');
 const FrontMatterParser = require('./src/frontmatterparser');
+const FrontMatterResolver = require('./src/frontmatterresolver');
 const ModuleUnitTestController = require('./src/moduleunittestcontroller');
+const ModuleUnitTestResult = require('./src/moduleunittestresult');
 const ParseErrorCode = require('./src/parseerrorcode');
 const ParseErrorDetail = require('./src/parseerrordetail');
 const PortItem = require('./src/portitem');
@@ -16,8 +18,10 @@ const ScriptParseException = require('./src/scriptparseexception');
 const ScriptParser = require('./src/scriptparser');
 const SlicePortItem = require('./src/sliceportitem');
 const SliceTestPin = require('./src/slicetestpin');
-const TestResult = require('./src/testresult');
+const TestPin = require('./src/testpin');
+const DataTestResult = require('./src/datatestresult');
 const UnitTestController = require('./src/unittestcontroller');
+const UnitTestResult = require('./src/unittestresult');
 
 module.exports = {
     CombinedPortItem: CombinedPortItem,
@@ -28,7 +32,9 @@ module.exports = {
     DataRowItemType: DataRowItemType,
     DataRowParser: DataRowParser,
     FrontMatterParser: FrontMatterParser,
+    FrontMatterResolver: FrontMatterResolver,
     ModuleUnitTestController: ModuleUnitTestController,
+    ModuleUnitTestResult: ModuleUnitTestResult,
     ParseErrorCode: ParseErrorCode,
     ParseErrorDetail: ParseErrorDetail,
     PortItem: PortItem,
@@ -38,6 +44,8 @@ module.exports = {
     ScriptParser: ScriptParser,
     SlicePortItem: SlicePortItem,
     SliceTestPin: SliceTestPin,
-    TestResult: TestResult,
+    TestPin: TestPin,
+    DataTestResult: DataTestResult,
     UnitTestController: UnitTestController,
+    UnitTestResult: UnitTestResult,
 };

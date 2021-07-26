@@ -12,7 +12,7 @@ const {
 
 const assert = require('assert/strict');
 
-describe('ScriptParse test', () => {
+describe('ScriptParse test - statements', () => {
     it('Test "nop" statement', async () => {
         let textContent =
             'A B Q\n' +
@@ -108,7 +108,7 @@ describe('ScriptParse test', () => {
         ]));
     });
 
-    it('Test cascading "for" statement', async () => {
+    it('Test "for" cascading statement', async () => {
         let textContent =
             'A B Q\n' +
             'for(i, 0, 10)\n' +
@@ -152,25 +152,27 @@ describe('ScriptParse test', () => {
             new DataCellItem(DataCellItemType.arithmetic, 'i+j')
         ]));
     });
+});
 
-    it('Test parse complete text', async () => {
+describe('ScriptParser test - integrated', () => {
+    it('Test parsing from text', async () => {
         let textContent =
-            `---
-        bitWidth: 1
-        inputPinCount: 2
-        ---
-        A B Q
-        0 0 0
-        0 1 0
-        1 0 0
-        1 1 1`;
+            '---\n' +
+            'bitWidth: 1\n' +
+            'inputPinCount: 2\n' +
+            '---\n' +
+            'A B Q\n' +
+            '0 0 0\n' +
+            '0 1 0\n' +
+            '1 0 0\n' +
+            '1 1 1';
 
         let scriptItem = await ScriptParser.parse(textContent, 'name1', 'filePath1');
 
         assert.equal(scriptItem.name, 'name1');
-        assert.equal(scriptItem.scriptFilePath, 'filePath1');
+        assert.equal(scriptItem.filePath, 'filePath1');
 
-        assert(ObjectUtils.equals(scriptItem.frontMatter, {
+        assert(ObjectUtils.equals(scriptItem.configParameters, {
             bitWidth: 1,
             inputPinCount: 2
         }));
@@ -210,7 +212,7 @@ describe('ScriptParse test', () => {
 
     });
 
-    it('Test parseFile', async () => {
+    it('Test parsing from file', async () => {
         let testDirectory = __dirname;
         let resourcesDirectory = path.join(testDirectory, 'resources');
         let scriptFile1 = path.join(resourcesDirectory, 'sample_script_1.test.txt');
@@ -219,18 +221,18 @@ describe('ScriptParse test', () => {
         assert.equal(scriptItem.name, 'sample_script_1');
 
         // 检查 front matter
-        let frontMatter = scriptItem.frontMatter;
-        assert.equal(frontMatter.bitWidth, 1);
-        assert.equal(frontMatter.inputPinCount, 2);
+        let configParameters = scriptItem.configParameters;
+        assert.equal(configParameters.bitWidth, 1);
+        assert.equal(configParameters.inputPinCount, 2);
 
-        assert(ObjectUtils.arrayEquals(frontMatter.someObject, [
+        assert(ObjectUtils.arrayEquals(configParameters.someObject, [
             { address: 0, value: 0 },
             { address: 1, value: 0 },
             { address: 2, value: 0 },
             { address: 3, value: 1 }
         ]));
 
-        assert.equal(frontMatter.someBinary.toString('utf-8'), 'hello');
+        assert.equal(configParameters.someBinary.toString('utf-8'), 'hello');
 
         // 检查 data row items
         let dataRowItems = scriptItem.dataRowItems;

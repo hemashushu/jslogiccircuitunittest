@@ -1,4 +1,4 @@
-class TestResult {
+class DataTestResult {
     constructor(pass = true,
         lineIdx, portName, actual, expect,
         exception) {
@@ -22,4 +22,4 @@ class TestResult {
     }
 }
 
-module.exports = TestResult;
+module.exports = DataTestResult;
