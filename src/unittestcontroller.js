@@ -1,7 +1,7 @@
 const { Binary } = require('jsbinary');
 const { VariableCalculator } = require('jsvariablecalculator');
 
-const { ModuleController,
+const { ModuleStateController,
     LogicModuleFactory,
     Signal,
     PinDirection } = require('jslogiccircuit');
@@ -51,7 +51,7 @@ class UnitTestController {
         this.testPins = this.generateTestPins(logicModule, portItems);
 
         // 模块控制器（运行器）
-        this.moduleController = new ModuleController(logicModule);
+        this.moduleStateController = new ModuleStateController(logicModule);
     }
 
     /**
@@ -270,7 +270,7 @@ class UnitTestController {
                     }
 
                     // 2. 更新模块状态
-                    this.moduleController.step();
+                    this.moduleStateController.update();
 
                     // 3. 检验输出数据
                     for (let column = 0; column < this.testPins.length; column++) {
@@ -301,16 +301,16 @@ class UnitTestController {
                     // 4. 如果是时序模式，则空更新一次模块状态（模块一般
                     //    连接了时钟信号）
                     if (this.seqMode === true) {
-                        this.moduleController.step();
+                        this.moduleStateController.update();
                     }
 
                 } else if (dataRowItem.type === DataRowItemType.nop) {
                     // 空转一次
                     if (this.seqMode === true) {
-                        this.moduleController.step();
-                        this.moduleController.step();
+                        this.moduleStateController.update();
+                        this.moduleStateController.update();
                     } else {
-                        this.moduleController.step();
+                        this.moduleStateController.update();
                     }
 
                 } else {
