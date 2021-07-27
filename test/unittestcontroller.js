@@ -68,7 +68,7 @@ describe('UnitTestController Test - successful cases', () => {
         assert.equal(unitTestResult1.title, 'title');
         assert.equal(unitTestResult1.scriptName, 'and_gate');
         assert.equal(unitTestResult1.scriptFilePath, getScriptFilePath('and_gate.test.txt'));
-        assert.equal(unitTestResult1.testResult.pass, true);
+        assert.equal(unitTestResult1.dataTestResult.pass, true);
     });
 
     it('And gate (with parameters) test', async () => {
@@ -83,8 +83,8 @@ describe('UnitTestController Test - successful cases', () => {
             scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
             scriptItem1.name, scriptItem1.filePath);
 
-        let { testResult } = unitTestController1.test();
-        assert.equal(testResult.pass, true);
+        let { dataTestResult } = unitTestController1.test();
+        assert.equal(dataTestResult.pass, true);
     });
 
     it('Half adder test', async () => {
@@ -97,8 +97,8 @@ describe('UnitTestController Test - successful cases', () => {
             scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
             scriptItem1.name, scriptItem1.filePath);
 
-        let { testResult } = unitTestController1.test();
-        assert.equal(testResult.pass, true);
+        let { dataTestResult } = unitTestController1.test();
+        assert.equal(dataTestResult.pass, true);
     });
 
     it('Full adder test', async () => {
@@ -111,8 +111,8 @@ describe('UnitTestController Test - successful cases', () => {
             scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
             scriptItem1.name, scriptItem1.filePath);
 
-        let { testResult } = unitTestController1.test();
-        assert.equal(testResult.pass, true);
+        let { dataTestResult } = unitTestController1.test();
+        assert.equal(dataTestResult.pass, true);
     });
 
     it('4-bit adder test', async () => {
@@ -125,8 +125,8 @@ describe('UnitTestController Test - successful cases', () => {
             scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
             scriptItem1.name, scriptItem1.filePath);
 
-        let { testResult } = unitTestController1.test();
-        assert.equal(testResult.pass, true);
+        let { dataTestResult } = unitTestController1.test();
+        assert.equal(dataTestResult.pass, true);
     });
 });
 
@@ -225,13 +225,13 @@ describe('UnitTestController Test - failed cases', () => {
             scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
             scriptItem1.name, scriptItem1.filePath);
 
-        let { testResult } = unitTestController1.test();
+        let { dataTestResult } = unitTestController1.test();
 
-        assert.equal(testResult.pass, false);
-        assert.equal(testResult.lineIdx, 3);
-        assert.equal(testResult.portName, 'Q');
-        assert.equal(testResult.actual.getBinary().toBinaryString(), '1');
-        assert.equal(testResult.expect.getBinary().toBinaryString(), '0');
+        assert.equal(dataTestResult.pass, false);
+        assert.equal(dataTestResult.lineIdx, 3);
+        assert.equal(dataTestResult.portName, 'Q');
+        assert.equal(dataTestResult.actual.getBinary().toBinaryString(), '1');
+        assert.equal(dataTestResult.expect.getBinary().toBinaryString(), '0');
     });
 
     it('Test check error in loop', async () => {
@@ -262,12 +262,12 @@ describe('UnitTestController Test - failed cases', () => {
             scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
             scriptItem1.name, scriptItem1.filePath);
 
-        let { testResult } = unitTestController1.test();
-        assert.equal(testResult.pass, false);
-        assert.equal(testResult.lineIdx, 9);
-        assert.equal(testResult.portName, '{Cout, S}');
-        assert.equal(testResult.actual.getBinary().toBinaryString(), '01');  // 0b01
-        assert.equal(testResult.expect.getBinary().toBinaryString(), '10');  // 0b10
+        let { dataTestResult } = unitTestController1.test();
+        assert.equal(dataTestResult.pass, false);
+        assert.equal(dataTestResult.lineIdx, 9);
+        assert.equal(dataTestResult.portName, '{Cout, S}');
+        assert.equal(dataTestResult.actual.getBinary().toBinaryString(), '01');  // 0b01
+        assert.equal(dataTestResult.expect.getBinary().toBinaryString(), '10');  // 0b10
     });
 
     it('Test input data syntax error', async () => {
@@ -286,8 +286,8 @@ describe('UnitTestController Test - failed cases', () => {
             scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
             scriptItem1.name, scriptItem1.filePath);
 
-        let { testResult } = unitTestController1.test();
-        let e = testResult.exception;
+        let { dataTestResult } = unitTestController1.test();
+        let e = dataTestResult.exception;
 
         assert(e instanceof ScriptParseException);
         assert.equal(e.parseErrorDetail.code, ParseErrorCode.syntaxError);
@@ -313,8 +313,8 @@ describe('UnitTestController Test - failed cases', () => {
             scriptItem1.name, scriptItem1.filePath);
 
 
-        let { testResult } = unitTestController1.test();
-        let e = testResult.exception;
+        let { dataTestResult } = unitTestController1.test();
+        let e = dataTestResult.exception;
 
         assert(e instanceof ScriptParseException);
         assert.equal(e.parseErrorDetail.code, ParseErrorCode.syntaxError);
@@ -340,8 +340,8 @@ describe('UnitTestController Test - failed cases', () => {
             scriptItem1.name, scriptItem1.filePath);
 
 
-        let { testResult } = unitTestController1.test();
-        let e = testResult.exception;
+        let { dataTestResult } = unitTestController1.test();
+        let e = dataTestResult.exception;
 
         assert(e instanceof ScriptParseException);
         assert.equal(e.parseErrorDetail.code, ParseErrorCode.evaluateError);

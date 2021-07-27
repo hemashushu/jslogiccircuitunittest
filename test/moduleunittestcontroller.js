@@ -49,7 +49,7 @@ describe('ModuleUnitTestController Test', () => {
 
         let unitTestResults = moduleUnitTestResult.unitTestResults;
 
-        let successfulItems = unitTestResults.filter(item => item.testResult.pass);
+        let successfulItems = unitTestResults.filter(item => item.dataTestResult.pass);
         let successfulScriptNames = successfulItems.map(item => item.scriptName);
         successfulScriptNames.sort();
 
@@ -57,11 +57,11 @@ describe('ModuleUnitTestController Test', () => {
             successfulScriptNames,
             ['1_bit_2_pin', '1_bit_3_pin', '2_bit_2_pin']));
 
-        let failedItems = unitTestResults.filter(item => !item.testResult.pass);
+        let failedItems = unitTestResults.filter(item => !item.dataTestResult.pass);
         assert.equal(failedItems.length, 1);
         assert.equal(failedItems[0].scriptName, '1_bit_2_pin.failed');
 
-        let failedTestResult = failedItems[0].testResult;
+        let failedTestResult = failedItems[0].dataTestResult;
         assert.equal(failedTestResult.lineIdx, 7);
         assert.equal(failedTestResult.actual.getBinary().toBinaryString(), '0');
         assert.equal(failedTestResult.expect.getBinary().toBinaryString(), '1');
@@ -82,7 +82,7 @@ describe('ModuleUnitTestController Test', () => {
 
         let unitTestResults = moduleUnitTestResult.unitTestResults;
 
-        let successfulItems = unitTestResults.filter(item => item.testResult.pass);
+        let successfulItems = unitTestResults.filter(item => item.dataTestResult.pass);
         let successfulScriptNames = successfulItems.map(item => item.scriptName);
         successfulScriptNames.sort();
 

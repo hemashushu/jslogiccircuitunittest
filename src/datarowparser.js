@@ -325,8 +325,66 @@ class DataRowParser {
      * @returns
      */
     static convertToNumberDataCellItem(lineIdx, cellTextContent) {
-        let number = Number(cellTextContent);
-        if (isNaN(number)) {
+        let binaryString;
+        let highZString;
+
+        if (cellTextContent.startsWith('0b')){
+            let binaryBuffer = [];
+            let highZBuffer = [];
+            for(let idx=2;idx<cellTextContent.length;idx++) {
+                let char = cellTextContent[idx];
+                if (char === 'z') {
+                    binaryBuffer.push('0');
+                    highZBuffer.push('1');
+                }else if (char === '0' || char === '1'){
+                    binaryBuffer.push(char);
+                    highZBuffer.push('0');
+                }else {
+                    throw new ScriptParseException(
+                        'Binary data syntax error in data row',
+                        new ParseErrorDetail(ParseErrorCode.syntaxError,
+                            'number-syntax-error', lineIdx, undefined, {
+                                text: cellTextContent
+                            }));
+                }
+            }
+
+            binaryString = '0b' + binaryBuffer.join('');
+            highZString = '0b' + highZBuffer.join('');
+
+        }else if (cellTextContent.startsWith('0x')){
+            let binaryBuffer = [];
+            let highZBuffer = [];
+            for(let idx=2;idx<cellTextContent.length;idx++) {
+                let char = cellTextContent[idx];
+                if (char === 'z') {
+                    binaryBuffer.push('0');
+                    highZBuffer.push('f');
+                }else if (char >= '0' && char <='9' || char >= 'a' && char <= 'f'){
+                    binaryBuffer.push(char);
+                    highZBuffer.push('0');
+                }else {
+                    throw new ScriptParseException(
+                        'Hex data syntax error in data row',
+                        new ParseErrorDetail(ParseErrorCode.syntaxError,
+                            'number-syntax-error', lineIdx, undefined, {
+                                text: cellTextContent
+                            }));
+                }
+            }
+
+            binaryString = '0x' + binaryBuffer.join('');
+            highZString = '0x' + highZBuffer.join('');
+
+        }else {
+            binaryString = cellTextContent;
+            highZString = '0';
+        }
+
+        let binary = Number(binaryString);
+        let highZ = Number(highZString);
+
+        if (isNaN(binary) || isNaN(highZ)) {
             throw new ScriptParseException(
                 'Number syntax error in data row',
                 new ParseErrorDetail(ParseErrorCode.syntaxError,
@@ -334,7 +392,11 @@ class DataRowParser {
                         text: cellTextContent
                     }));
         }
-        return new DataCellItem(DataCellItemType.number, number);
+
+        return new DataCellItem(DataCellItemType.number, {
+            binary: binary,
+            highZ: highZ
+        });
     }
 
     static convertToStringDataCellItem(cellTextContent) {

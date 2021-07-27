@@ -58,7 +58,7 @@ describe('ScriptParse test - statements', () => {
 
         assert.equal(dataRowItems[1].childDataRowItems[0].type, DataRowItemType.data);
         assert(ObjectUtils.arrayEquals(dataRowItems[1].childDataRowItems[0].dataCellItems, [
-            new DataCellItem(DataCellItemType.number, 1),
+            new DataCellItem(DataCellItemType.number, { binary: 1, highZ: 0 }),
             new DataCellItem(DataCellItemType.arithmetic, 'i'),
             new DataCellItem(DataCellItemType.arithmetic, '1+i')
         ]));
@@ -95,16 +95,16 @@ describe('ScriptParse test - statements', () => {
 
         assert.equal(dataRowItems[1].childDataRowItems[0].type, DataRowItemType.data);
         assert(ObjectUtils.arrayEquals(dataRowItems[1].childDataRowItems[0].dataCellItems, [
-            new DataCellItem(DataCellItemType.number, 0),
+            new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 }),
             new DataCellItem(DataCellItemType.arithmetic, 'i'),
-            new DataCellItem(DataCellItemType.number, 0)
+            new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 })
         ]));
 
         assert.equal(dataRowItems[1].childDataRowItems[1].type, DataRowItemType.data);
         assert(ObjectUtils.arrayEquals(dataRowItems[1].childDataRowItems[1].dataCellItems, [
             new DataCellItem(DataCellItemType.arithmetic, '~i'),
             new DataCellItem(DataCellItemType.arithmetic, 'i'),
-            new DataCellItem(DataCellItemType.number, 0)
+            new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 })
         ]));
     });
 
@@ -189,25 +189,25 @@ describe('ScriptParser test - integrated', () => {
         assert.equal(dataRowItems[0].type, DataRowItemType.data);
         assert.equal(dataRowItems[0].lineIdx, 5);
         assert(ObjectUtils.equals(dataRowItems[0].dataCellItems, [
-            new DataCellItem(DataCellItemType.number, 0),
-            new DataCellItem(DataCellItemType.number, 0),
-            new DataCellItem(DataCellItemType.number, 0)
+            new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 }),
+            new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 }),
+            new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 })
         ]));
 
         assert.equal(dataRowItems[1].type, DataRowItemType.data);
         assert.equal(dataRowItems[1].lineIdx, 6);
         assert(ObjectUtils.equals(dataRowItems[1].dataCellItems, [
-            new DataCellItem(DataCellItemType.number, 0),
-            new DataCellItem(DataCellItemType.number, 1),
-            new DataCellItem(DataCellItemType.number, 0)
+            new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 }),
+            new DataCellItem(DataCellItemType.number, { binary: 1, highZ: 0 }),
+            new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 })
         ]));
 
         assert.equal(dataRowItems[3].type, DataRowItemType.data);
         assert.equal(dataRowItems[3].lineIdx, 8);
         assert(ObjectUtils.equals(dataRowItems[3].dataCellItems, [
-            new DataCellItem(DataCellItemType.number, 1),
-            new DataCellItem(DataCellItemType.number, 1),
-            new DataCellItem(DataCellItemType.number, 1)
+            new DataCellItem(DataCellItemType.number, { binary: 1, highZ: 0 }),
+            new DataCellItem(DataCellItemType.number, { binary: 1, highZ: 0 }),
+            new DataCellItem(DataCellItemType.number, { binary: 1, highZ: 0 })
         ]));
 
     });
@@ -245,24 +245,24 @@ describe('ScriptParser test - integrated', () => {
         assert(ObjectUtils.arrayEquals(cellRows,
             [
                 [
-                    new DataCellItem(DataCellItemType.number, 0),
-                    new DataCellItem(DataCellItemType.number, 0),
-                    new DataCellItem(DataCellItemType.number, 0)
+                    new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 }),
+                    new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 }),
+                    new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 })
                 ],
                 [
-                    new DataCellItem(DataCellItemType.number, 0),
-                    new DataCellItem(DataCellItemType.number, 1),
-                    new DataCellItem(DataCellItemType.number, 0)
+                    new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 }),
+                    new DataCellItem(DataCellItemType.number, { binary: 1, highZ: 0 }),
+                    new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 })
                 ],
                 [
-                    new DataCellItem(DataCellItemType.number, 1),
-                    new DataCellItem(DataCellItemType.number, 0),
-                    new DataCellItem(DataCellItemType.number, 0)
+                    new DataCellItem(DataCellItemType.number, { binary: 1, highZ: 0 }),
+                    new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 }),
+                    new DataCellItem(DataCellItemType.number, { binary: 0, highZ: 0 })
                 ],
                 [
-                    new DataCellItem(DataCellItemType.number, 1),
-                    new DataCellItem(DataCellItemType.number, 1),
-                    new DataCellItem(DataCellItemType.number, 1)
+                    new DataCellItem(DataCellItemType.number, { binary: 1, highZ: 0 }),
+                    new DataCellItem(DataCellItemType.number, { binary: 1, highZ: 0 }),
+                    new DataCellItem(DataCellItemType.number, { binary: 1, highZ: 0 })
                 ]
             ]
         ));

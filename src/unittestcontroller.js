@@ -383,8 +383,9 @@ class UnitTestController {
         switch (dataCellItemType) {
             case DataCellItemType.number:
                 {
-                    let binary = Binary.fromInt32(cellItemData, bitWidth);
-                    signal = Signal.createWithoutHighZ(bitWidth, binary);
+                    let binary = Binary.fromInt32(cellItemData.binary, bitWidth);
+                    let highZ = Binary.fromInt32(cellItemData.highZ, bitWidth);
+                    signal = Signal.create(bitWidth, binary, highZ);
                     break;
                 }
 
