@@ -230,8 +230,8 @@ describe('UnitTestController Test - failed cases', () => {
         assert.equal(dataTestResult.pass, false);
         assert.equal(dataTestResult.lineIdx, 3);
         assert.equal(dataTestResult.portName, 'Q');
-        assert.equal(dataTestResult.actual.getBinary().toBinaryString(), '1');
-        assert.equal(dataTestResult.expect.getBinary().toBinaryString(), '0');
+        assert.equal(dataTestResult.actual.toBinaryString(), '1');
+        assert.equal(dataTestResult.expect.toBinaryString(), '0');
     });
 
     it('Test check error in loop', async () => {
@@ -266,8 +266,8 @@ describe('UnitTestController Test - failed cases', () => {
         assert.equal(dataTestResult.pass, false);
         assert.equal(dataTestResult.lineIdx, 9);
         assert.equal(dataTestResult.portName, '{Cout, S}');
-        assert.equal(dataTestResult.actual.getBinary().toBinaryString(), '01');  // 0b01
-        assert.equal(dataTestResult.expect.getBinary().toBinaryString(), '10');  // 0b10
+        assert.equal(dataTestResult.actual.toBinaryString(), '01');  // 0b01
+        assert.equal(dataTestResult.expect.toBinaryString(), '10');  // 0b10
     });
 
     it('Test input data syntax error', async () => {

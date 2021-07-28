@@ -63,8 +63,8 @@ describe('ModuleUnitTestController Test', () => {
 
         let failedTestResult = failedItems[0].dataTestResult;
         assert.equal(failedTestResult.lineIdx, 7);
-        assert.equal(failedTestResult.actual.getBinary().toBinaryString(), '0');
-        assert.equal(failedTestResult.expect.getBinary().toBinaryString(), '1');
+        assert.equal(failedTestResult.actual.toBinaryString(), '0');
+        assert.equal(failedTestResult.expect.toBinaryString(), '1');
     });
 
     it('Test module "Driver" all unit test scripts', async () => {

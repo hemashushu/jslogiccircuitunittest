@@ -29,18 +29,18 @@ class NandGate extends SimpleLogicModule {
         });
 
         let state = states[0];
-        let resultBinary = Binary.and(state.binary, Binary.not(state.highZ));
+        let levelResult = Binary.and(state.level, Binary.not(state.highZ));
 
         for (let idx = 1; idx < states.length; idx++) {
             state = states[idx];
-            let currentBinary = Binary.and(state.binary, Binary.not(state.highZ));
-            resultBinary = Binary.and(resultBinary, currentBinary);
+            let currentBinary = Binary.and(state.level, Binary.not(state.highZ));
+            levelResult = Binary.and(levelResult, currentBinary);
         }
 
-        resultBinary = Binary.not(resultBinary);
-        let resultSignal = Signal.createWithoutHighZ(this._bitWidth, resultBinary);
+        levelResult = Binary.not(levelResult);
+        let signalResult = Signal.createWithoutHighZ(this._bitWidth, levelResult);
 
-        this._pinOut.setSignal(resultSignal);
+        this._pinOut.setSignal(signalResult);
     }
 }
 

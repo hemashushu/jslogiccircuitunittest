@@ -26,21 +26,21 @@ class CombinedTestPin extends AbstractTestPin {
     setSignal(signal) {
         let offset = 0;
 
-        let {binary, highZ} = signal.getState();
+        let {level, highZ} = signal.getState();
 
         for (let idx = this.childTestPins.length - 1; idx >= 0; idx--) {
             let childTestPin = this.childTestPins[idx];
-            let partialBinary = binary.slice(offset, childTestPin.bitWidth);
+            let partialLevel = level.slice(offset, childTestPin.bitWidth);
             let partialHighZ = highZ.slice(offset, childTestPin.bitWidth);
 
-            let signal = Signal.create(childTestPin.bitWidth, partialBinary, partialHighZ);
+            let signal = Signal.create(childTestPin.bitWidth, partialLevel, partialHighZ);
             childTestPin.setSignal(signal);
             offset += childTestPin.bitWidth;
         }
     }
 
     getSignal() {
-        let binary = Binary.fromInt32(0, this.bitWidth);
+        let level = Binary.fromInt32(0, this.bitWidth);
         let highZ = Binary.fromInt32(0, this.bitWidth);
 
         let offset = 0;
@@ -49,13 +49,13 @@ class CombinedTestPin extends AbstractTestPin {
             let childTestPin = this.childTestPins[idx];
             let state = childTestPin.getSignal().getState();
 
-            binary = binary.splice(offset, state.binary);
+            level = level.splice(offset, state.level);
             highZ = highZ.splice(offset, state.highZ);
 
             offset += childTestPin.bitWidth;
         }
 
-        return Signal.create(this.bitWidth, binary, highZ);
+        return Signal.create(this.bitWidth, level, highZ);
     }
 
     static getPinsBitWidth(testPins) {
