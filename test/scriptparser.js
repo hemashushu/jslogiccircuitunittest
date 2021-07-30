@@ -3,6 +3,8 @@ const path = require('path');
 const { ObjectUtils } = require('jsobjectutils');
 
 const {
+    ScriptParseException,
+    ParseErrorCode,
     ScriptParser,
     PortItem,
     DataCellItem,
@@ -210,6 +212,51 @@ describe('ScriptParser test - integrated', () => {
             new DataCellItem(DataCellItemType.number, { binary: 1, highZ: 0 })
         ]));
 
+    });
+
+    it('Test data cells count mismatch', async () => {
+
+        let textContent1 =
+            'A B Q\n' +
+            '0 0 0\n' +
+            '0 1 1\n' +
+            '1 0\n' + // <-- line idx 3 cell items count mismatch port items count
+            '1 1 1';
+
+        try{
+            await ScriptParser.parse(textContent1, 'name1', 'filePath1');
+            assert.fail();
+        }catch(err) {
+            assert(err instanceof ScriptParseException)
+
+            let parseErrorDetail = err.parseErrorDetail;
+            assert.equal(parseErrorDetail.code, ParseErrorCode.mismatchDataCellCount);
+            assert.equal(parseErrorDetail.messageId, 'mismatch-data-cell-count');
+            assert.equal(parseErrorDetail.lineIdx, 3);
+            assert(ObjectUtils.objectEquals(parseErrorDetail.data, { pinsCount: 3, cellsCount: 2 }));
+        }
+
+        let textContent2 =
+            'A B Q\n' +
+            '0 0 0\n' +
+            '1 1 1\n' +
+            'for(i,0,1)\n' +
+            '  0 1 1 (i)\n' + // <-- line idx 4 cell items count mismatch port items count
+            'end\n' +
+            '1 0 1';
+
+        try{
+            await ScriptParser.parse(textContent2, 'name1', 'filePath1');
+            assert.fail();
+        }catch(err) {
+            assert(err instanceof ScriptParseException)
+
+            let parseErrorDetail = err.parseErrorDetail;
+            assert.equal(parseErrorDetail.code, ParseErrorCode.mismatchDataCellCount);
+            assert.equal(parseErrorDetail.messageId, 'mismatch-data-cell-count');
+            assert.equal(parseErrorDetail.lineIdx, 4);
+            assert(ObjectUtils.objectEquals(parseErrorDetail.data, { pinsCount: 3, cellsCount: 4 }));
+        }
     });
 
     it('Test parsing from file', async () => {

@@ -213,8 +213,8 @@ class UnitTestController {
      *
      * - 如果模块存在振荡，则抛出 OscillatingException 异常。
      * - 如果模块存在短路情况，则抛出 ShortCircuitException 异常。
-     * - 如果测试脚本存在错误（一般语法错误在加载脚本时已经检测，这里是因为
-     *   算术表达式引起的错误），则抛出 ScriptParseException 异常。
+     * - 如果测试脚本存在错误，则抛出 ScriptParseException 异常，一般的语法错误
+     *   在加载脚本时已经检测，这里的错误是因为错误的算术表达式等原因引起的。
      *
      * @param {*} dataRowItems
      * @param {*} variableContext

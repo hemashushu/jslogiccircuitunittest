@@ -159,7 +159,53 @@ class ScriptParser {
 
         // 提取头信息（Front-Matter）的 "属性" 和 "配置参数"
         let externalFileDirectory = path.dirname(scriptFilePath);
-        let {attributes, configParameters} = await FrontMatterResolver.resolve(frontMatter, externalFileDirectory);
+        let { attributes, configParameters } = await FrontMatterResolver.resolve(frontMatter, externalFileDirectory);
+
+        // 检查数据单元格数量跟端口数量是否匹配
+        let portsCount = portItems.length;
+
+        let checkDataCellCount = (dataRowItem) => {
+            switch (dataRowItem.type) {
+                case DataRowItemType.data:
+                    {
+                        if (dataRowItem.dataCellItems.length !== portsCount) {
+                            return { pass: false, dataRowItem: dataRowItem };
+                        } else {
+                            return { pass: true};
+                        }
+                    }
+
+                case DataRowItemType.nop:
+                    {
+                        return { pass: true};
+                    }
+
+                case DataRowItemType.group:
+                    {
+                        for(let childDataRowItem of dataRowItem.childDataRowItems) {
+                            let childResult = checkDataCellCount(childDataRowItem);
+                            if (childResult.pass === false) {
+                                return childResult;
+                            }
+                        }
+
+                        return {pass: true};
+                    }
+            }
+        };
+
+        let checkResult = checkDataCellCount(rootDataRowItem);
+
+        if (checkResult.pass !== true) {
+            let failedDataRowItem = checkResult.dataRowItem;
+            throw new ScriptParseException(
+                'The number of data cells does not match the number of ports',
+                new ParseErrorDetail(ParseErrorCode.mismatchDataCellCount,
+                    'mismatch-data-cell-count', failedDataRowItem.lineIdx, undefined, {
+                    pinsCount: portsCount,
+                    cellsCount: failedDataRowItem.dataCellItems.length
+                }));
+        }
 
         let scriptItem = new ScriptItem(scriptName,
             scriptFilePath,

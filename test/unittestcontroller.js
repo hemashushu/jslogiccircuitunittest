@@ -209,7 +209,7 @@ describe('UnitTestController Test - failed cases', () => {
         }
     });
 
-    it('Test check error', async () => {
+    it('Test output data check error', async () => {
         let scriptItem1 = await ScriptParser.parse(
             'A B Q\n' +
             '0 0 0\n' +
@@ -234,7 +234,7 @@ describe('UnitTestController Test - failed cases', () => {
         assert.equal(dataTestResult.expect.toBinaryString(), '0');
     });
 
-    it('Test check error in loop', async () => {
+    it('Test output data check error in loop', async () => {
         let scriptItem1 = await ScriptParser.parse(
             'A B Cin {Cout, S}\n' +
             '0 0 0   0\n' +
