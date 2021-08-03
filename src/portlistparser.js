@@ -224,32 +224,33 @@ class PortListParser {
             return PortListParser.convertToAbstractPortItem(portText);
         });
 
-        // 检查端口语法
-        for (let portItem of portItems) {
-            if (!portItem.isValid()) {
-                throw new ScriptParseException(
-                    'Invalid port name',
-                    new ParseErrorDetail(ParseErrorCode.invalidPortName,
-                        'invalid-port-name',
-                        undefined, undefined, {
-                        text: portItem.getTitle()
-                    }));
-            }
-        }
-
         return portItems;
     }
 
     static convertToAbstractPortItem(portText) {
+        let portItem;
         if (portText.startsWith('{')) {
-            return PortListParser.convertToCombinedPortItem(portText);
+            portItem = PortListParser.convertToCombinedPortItem(portText);
 
         } else if (portText.indexOf('[') > 0) {
-            return PortListParser.convertToSlicePortItem(portText);
+            portItem = PortListParser.convertToSlicePortItem(portText);
 
         } else {
-            return PortListParser.convertToPortItem(portText);
+            portItem = PortListParser.convertToPortItem(portText);
         }
+
+        // 检查端口语法
+        if (!portItem.isValid()) {
+            throw new ScriptParseException(
+                'Invalid port name',
+                new ParseErrorDetail(ParseErrorCode.invalidPortName,
+                    'invalid-port-name',
+                    undefined, undefined, {
+                    text: portItem.getTitle()
+                }));
+        }
+
+        return portItem;
     }
 
     static convertToCombinedPortItem(portText) {

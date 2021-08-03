@@ -9,14 +9,16 @@ const { ModuleStateController,
 const CombinedTestPin = require('./combinedtestpin');
 const DataCellItemType = require('./datacellitemtype');
 const DataRowItemType = require('./datarowitemtype');
+const DataTestResult = require('./datatestresult');
+const EdgeType = require('./edgetype');
 const ParseErrorCode = require('./parseerrorcode');
 const ParseErrorDetail = require('./parseerrordetail');
 const PortItem = require('./portitem');
+const PortListParser = require('./portlistparser');
 const ScriptParseException = require('./scriptparseexception');
 const SlicePortItem = require('./sliceportitem');
 const SliceTestPin = require('./slicetestpin');
 const TestPin = require('./testpin');
-const DataTestResult = require('./datatestresult');
 const UnitTestResult = require('./unittestresult');
 
 class UnitTestController {
@@ -32,13 +34,12 @@ class UnitTestController {
      */
     constructor(packageName, moduleClassName,
         title,
-        seqMode,
-        portItems, dataRowItems, configParameters,
+        attributes, configParameters,
+        portItems, dataRowItems,
         scriptName, scriptFilePath
-        ) {
+    ) {
 
         this.title = title; // 单元测试的标题
-        this.seqMode = seqMode; // 时序模式标记
         this.dataRowItems = dataRowItems; // 待测试的数据
 
         this.scriptName = scriptName; // 测试脚本的名称（即不带扩展名的文件名）
@@ -52,6 +53,26 @@ class UnitTestController {
 
         // 模块控制器（运行器）
         this.moduleStateController = new ModuleStateController(logicModule);
+
+        // 检查是否时序电路测试
+        let clockPortName = attributes['clock'];
+        let checkEdge = attributes['edge'];
+
+        if (clockPortName !== undefined && clockPortName !== null && clockPortName.trim() !== '') {
+            let clockPortItem = PortListParser.convertToAbstractPortItem(clockPortName.trim());
+            let clockCheckEdge = checkEdge === 'posedge' ? EdgeType.posedge :
+                (checkEdge === 'negedge' ? EdgeType.negedge : EdgeType.both);
+
+            this.clockPin = this.generateTestPin(logicModule, clockPortItem);
+            this.clockCheckEdge = clockCheckEdge;
+        }
+
+        this.sequentialMode = this.clockPin !== undefined;
+        this.lastClockSignal = undefined;
+
+        // 生成 1-bit 高低电平信号
+        this.signalHigh = Signal.createHigh(1);
+        this.signalLow = Signal.createLow(1);
     }
 
     /**
@@ -191,12 +212,12 @@ class UnitTestController {
     test() {
         let dataTestResult;
 
-        try{
+        try {
             let variableContext = {};
             dataTestResult = this.testDataRowItems(
                 this.dataRowItems, variableContext, undefined, 0, 0);
 
-        }catch(err){
+        } catch (err) {
             // 构建一个测试结果为异常对象的 DataTestResult 对象。
             dataTestResult = new DataTestResult(false,
                 undefined, undefined, undefined, undefined,
@@ -238,82 +259,7 @@ class UnitTestController {
                 let dataRowItem = dataRowItems[idx];
                 let lineIdx = dataRowItem.lineIdx;
 
-                if (dataRowItem.type === DataRowItemType.data) {
-                    // 数据测试
-
-                    let dataCellItems = dataRowItem.dataCellItems;
-
-                    // 1. 设置输入数据
-                    for (let column = 0; column < this.testPins.length; column++) {
-                        let testPin = this.testPins[column];
-                        if (!testPin.isInput) {
-                            continue;
-                        }
-
-                        let dataCellItem = dataCellItems[column];
-                        let signal = UnitTestController.convertCellDataToSignal(
-                            dataCellItem.type, dataCellItem.data, testPin.bitWidth,
-                            lineIdx, variableContext);
-
-                        // 单元格的内容是一个 "x" 字符，表示不检查输出数据，此字符
-                        // 不用用于输入信号。
-                        if (signal === undefined) {
-                            throw new ScriptParseException(
-                                'Cannot set wildcard asterisk to input port',
-                                new ParseErrorDetail(ParseErrorCode.syntaxError,
-                                    'wildcard-asterisk-syntax-error', lineIdx, undefined, {
-                                    portName: testPin.name
-                                }));
-                        }
-
-                        testPin.setSignal(signal);
-                    }
-
-                    // 2. 更新模块状态
-                    this.moduleStateController.update();
-
-                    // 3. 检验输出数据
-                    for (let column = 0; column < this.testPins.length; column++) {
-                        let testPin = this.testPins[column];
-                        if (testPin.isInput) {
-                            continue;
-                        }
-                        let dataCellItem = dataCellItems[column];
-
-                        let expectSignal = UnitTestController.convertCellDataToSignal(
-                            dataCellItem.type, dataCellItem.data, testPin.bitWidth,
-                            lineIdx, variableContext);
-
-                        // 单元格的内容是一个 "x" 字符，表示不检查输出数据
-                        if (expectSignal === undefined) {
-                            continue;
-                        }
-
-                        let actualSignal = testPin.getSignal();
-
-                        if (!Signal.equal(actualSignal, expectSignal)) {
-                            return new DataTestResult(false,
-                                lineIdx, testPin.name,
-                                actualSignal, expectSignal);
-                        }
-                    }
-
-                    // 4. 如果是时序模式，则空更新一次模块状态（模块一般
-                    //    连接了时钟信号）
-                    if (this.seqMode === true) {
-                        this.moduleStateController.update();
-                    }
-
-                } else if (dataRowItem.type === DataRowItemType.nop) {
-                    // 空转一次
-                    if (this.seqMode === true) {
-                        this.moduleStateController.update();
-                        this.moduleStateController.update();
-                    } else {
-                        this.moduleStateController.update();
-                    }
-
-                } else {
+                if (dataRowItem.type === DataRowItemType.group) {
                     // 新的组
                     let groupTestResult = this.testDataRowItems(
                         dataRowItem.childDataRowItems,
@@ -327,11 +273,138 @@ class UnitTestController {
                         // 组测试不通过，跳过剩余的测试过程
                         return groupTestResult;
                     }
+
+                }else {
+                    let rowTestResult;
+
+                    if (this.sequentialMode) {
+                        switch(this.clockCheckEdge) {
+                            case EdgeType.both:
+                                {
+                                    this.toggleClockSignal();
+                                    rowTestResult = this.testDataRowItem(dataRowItem, lineIdx, variableContext);
+                                    break;
+                                }
+
+                            case EdgeType.negedge:
+                                {
+                                    this.updateClockSignal(this.signalLow);
+                                    rowTestResult = this.testDataRowItem(dataRowItem, lineIdx, variableContext);
+                                    this.updateClockSignal(this.signalHigh);
+                                    this.moduleStateController.update(); // 空转一次
+                                    break;
+                                }
+
+                            case EdgeType.posedge:
+                                {
+                                    this.updateClockSignal(this.signalLow);
+                                    this.moduleStateController.update(); // 空转一次
+                                    this.updateClockSignal(this.signalHigh);
+                                    rowTestResult = this.testDataRowItem(dataRowItem, lineIdx, variableContext);
+                                    break;
+                                }
+                        }
+
+                    }else {
+                        rowTestResult = this.testDataRowItem(dataRowItem, lineIdx, variableContext);
+                    }
+
+                    if (rowTestResult.pass !== true) {
+                        // 组测试不通过，跳过剩余的测试过程
+                        return rowTestResult;
+                    }
                 }
             }
         }
 
         return new DataTestResult(true); // pass
+    }
+
+    toggleClockSignal() {
+        let currentClockSignal;
+
+        if (this.lastClockSignal === undefined) {
+            currentClockSignal = this.signalLow;
+        }else if(Signal.equal(this.lastClockSignal, this.signalLow)) {
+            currentClockSignal = this.signalHigh;
+        }else {
+            currentClockSignal = this.signalLow;
+        }
+
+        this.lastClockSignal = currentClockSignal;
+        this.clockPin.setSignal(currentClockSignal);
+    }
+
+    updateClockSignal(clockSignal) {
+        this.clockPin.setSignal(clockSignal);
+    }
+
+    testDataRowItem(dataRowItem, lineIdx, variableContext) {
+        if (dataRowItem.type === DataRowItemType.data) {
+            // 数据测试
+            let dataCellItems = dataRowItem.dataCellItems;
+
+            // 1. 设置输入数据
+            for (let column = 0; column < this.testPins.length; column++) {
+                let testPin = this.testPins[column];
+                if (!testPin.isInput) {
+                    continue;
+                }
+
+                let dataCellItem = dataCellItems[column];
+                let signal = UnitTestController.convertCellDataToSignal(
+                    dataCellItem.type, dataCellItem.data, testPin.bitWidth,
+                    lineIdx, variableContext);
+
+                // 单元格的内容是一个 "x" 字符，表示不检查输出数据，此字符
+                // 不用用于输入信号。
+                if (signal === undefined) {
+                    throw new ScriptParseException(
+                        'Cannot set wildcard asterisk to input port',
+                        new ParseErrorDetail(ParseErrorCode.syntaxError,
+                            'wildcard-asterisk-syntax-error', lineIdx, undefined, {
+                            portName: testPin.name
+                        }));
+                }
+
+                testPin.setSignal(signal);
+            }
+
+            // 2. 更新模块状态
+            this.moduleStateController.update();
+
+            // 3. 检验输出数据
+            for (let column = 0; column < this.testPins.length; column++) {
+                let testPin = this.testPins[column];
+                if (testPin.isInput) {
+                    continue;
+                }
+                let dataCellItem = dataCellItems[column];
+
+                let expectSignal = UnitTestController.convertCellDataToSignal(
+                    dataCellItem.type, dataCellItem.data, testPin.bitWidth,
+                    lineIdx, variableContext);
+
+                // 单元格的内容是一个 "x" 字符，表示不检查输出数据
+                if (expectSignal === undefined) {
+                    continue;
+                }
+
+                let actualSignal = testPin.getSignal();
+
+                if (!Signal.equal(actualSignal, expectSignal)) {
+                    return new DataTestResult(false,
+                        lineIdx, testPin.name,
+                        actualSignal, expectSignal);
+                }
+            }
+
+        } else if (dataRowItem.type === DataRowItemType.nop) {
+            // 空转一次
+            this.moduleStateController.update();
+        }
+
+        return new DataTestResult(true);
     }
 
     static convertStringToBinary(text, bitWidth) {

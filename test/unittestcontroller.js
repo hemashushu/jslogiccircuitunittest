@@ -60,8 +60,8 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-code',
             'and_gate',
             'title',
-            false,
-            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
         let unitTestResult1 = unitTestController1.test();
@@ -79,8 +79,8 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-code',
             'and_gate_parameter',
             'title',
-            false,
-            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
         let { dataTestResult } = unitTestController1.test();
@@ -93,8 +93,8 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-config',
             'half_adder',
             'title',
-            false,
-            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
         let { dataTestResult } = unitTestController1.test();
@@ -107,8 +107,8 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-mix',
             'full_adder',
             'title',
-            false,
-            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
         let { dataTestResult } = unitTestController1.test();
@@ -121,8 +121,85 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-mix',
             'four_bit_adder',
             'title',
-            false,
-            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
+            scriptItem1.name, scriptItem1.filePath);
+
+        let { dataTestResult } = unitTestController1.test();
+        assert.equal(dataTestResult.pass, true);
+    });
+
+    it('clock test - both edge', async () => {
+        let scriptItem1 = await ScriptParser.parse(
+            '---\n' +
+            '!clock: A\n' +
+            '---\n' +
+            'B Q\n' +
+            '0 0\n' +
+            '1 1\n' +
+            '0 0\n' +
+            '1 1');
+
+        // 构造测试控制器
+        let unitTestController1 = new UnitTestController(
+            'package-by-code',
+            'and_gate',
+            'title',
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
+            scriptItem1.name, scriptItem1.filePath);
+
+        let { dataTestResult } = unitTestController1.test();
+        assert.equal(dataTestResult.pass, true);
+    });
+
+    it('clock test - positive edge', async () => {
+        let scriptItem1 = await ScriptParser.parse(
+            '---\n' +
+            '!clock: A\n' +
+            '!edge: posedge\n' +
+            '---\n' +
+            'B Q\n' +
+            '1 1\n' +
+            '1 1\n' +
+            '1 1\n' +
+            '1 1');
+
+        // 构造测试控制器
+        let unitTestController1 = new UnitTestController(
+            'package-by-code',
+            'and_gate',
+            'title',
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
+            scriptItem1.name, scriptItem1.filePath);
+
+        let { dataTestResult } = unitTestController1.test();
+        assert.equal(dataTestResult.pass, true);
+    });
+
+    it('clock test - with nop keyword', async () => {
+        let scriptItem1 = await ScriptParser.parse(
+            '---\n' +
+            '!clock: A\n' +
+            '---\n' +
+            'B Q\n' +
+            '0 0\n' +
+            '1 1\n' +
+            'nop\n' +
+            '1 1\n' +
+            '0 0\n' +
+            'nop\n' +
+            '0 0\n' +
+            '1 1');
+
+        // 构造测试控制器
+        let unitTestController1 = new UnitTestController(
+            'package-by-code',
+            'and_gate',
+            'title',
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
         let { dataTestResult } = unitTestController1.test();
@@ -140,8 +217,8 @@ describe('UnitTestController Test - failed cases', () => {
             new UnitTestController(
                 'no-this-package',
                 'or_gate', 'title',
-                false,
-                scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+                scriptItem1.attributes, scriptItem1.configParameters,
+                scriptItem1.portItems, scriptItem1.dataRowItems,
                 scriptItem1.name, scriptItem1.filePath);
 
             assert.fail();
@@ -159,8 +236,8 @@ describe('UnitTestController Test - failed cases', () => {
             new UnitTestController(
                 'package-by-code',
                 'or_gate_ext', 'title',
-                false,
-                scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+                scriptItem1.attributes, scriptItem1.configParameters,
+                scriptItem1.portItems, scriptItem1.dataRowItems,
                 scriptItem1.name, scriptItem1.filePath);
             assert.fail();
         } catch (e) {
@@ -178,8 +255,8 @@ describe('UnitTestController Test - failed cases', () => {
                 'package-by-code',
                 'or_gate',
                 'title',
-                false,
-                scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+                scriptItem1.attributes, scriptItem1.configParameters,
+                scriptItem1.portItems, scriptItem1.dataRowItems,
                 scriptItem1.name, scriptItem1.filePath);
             assert.fail();
         } catch (e) {
@@ -198,8 +275,8 @@ describe('UnitTestController Test - failed cases', () => {
             new UnitTestController(
                 'package-by-code',
                 'or_gate', 'title',
-                false,
-                scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+                scriptItem1.attributes, scriptItem1.configParameters,
+                scriptItem1.portItems, scriptItem1.dataRowItems,
                 scriptItem1.name, scriptItem1.filePath);
             assert.fail();
         } catch (e) {
@@ -221,8 +298,8 @@ describe('UnitTestController Test - failed cases', () => {
             'package-by-code',
             'or_gate',
             'title',
-            false,
-            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
         let { dataTestResult } = unitTestController1.test();
@@ -258,8 +335,8 @@ describe('UnitTestController Test - failed cases', () => {
             'package-by-mix',
             'full_adder',
             'title',
-            false,
-            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
         let { dataTestResult } = unitTestController1.test();
@@ -282,8 +359,8 @@ describe('UnitTestController Test - failed cases', () => {
             'package-by-code',
             'or_gate',
             'title',
-            false,
-            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
         let { dataTestResult } = unitTestController1.test();
@@ -308,8 +385,8 @@ describe('UnitTestController Test - failed cases', () => {
             'package-by-code',
             'or_gate',
             'title',
-            false,
-            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
 
@@ -335,8 +412,8 @@ describe('UnitTestController Test - failed cases', () => {
             'package-by-code',
             'or_gate',
             'title',
-            false,
-            scriptItem1.portItems, scriptItem1.dataRowItems, scriptItem1.configParameters,
+            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
 

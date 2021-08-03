@@ -86,46 +86,8 @@ class ModuleUnitTestController {
         let unitTestResults = [];
 
         for (let scriptItem of scriptItems) {
-
-            // 尝试获取单元测试的标题
-            // 标题被写到 Front-Matter 的 "!title" 属性里，如果
-            // 不存在该属性，则使用脚本文件的名称（即不带扩展名的文件名）作为标题。
-
-            let attributes = scriptItem.attributes;
-            let title = LocaleProperty.getValue(attributes, 'title', localeCode);
-            if (title === undefined) {
-                title = scriptItem.name;
-            }
-
-            let seqMode = (attributes['seq'] === true);
-
-            let unitTestResult;
-
-            try{
-                // - 如果逻辑包或者逻辑模块找不到，则抛出 IllegalArgumentException 异常。
-                // - 如果**脚本里的**端口列表指定的端口或者子模块找不到，则抛出 ScriptParseException 异常。
-                let unitTestController = new UnitTestController(
-                    packageName, moduleClassName, title, seqMode,
-                    scriptItem.portItems, scriptItem.dataRowItems, scriptItem.configParameters,
-                    scriptItem.name, scriptItem.filePath);
-
-                unitTestResult = unitTestController.test();
-
-            }catch(err) {
-                // 构造一个结果为异常的 DataTestResult 对象。
-                let dataTestResult = new DataTestResult(false,
-                    undefined, undefined, undefined, undefined, err);
-
-                let scriptName = scriptItem.name;
-                let scriptFilePath = scriptItem.filePath;
-
-                // 构造 UnitTestResult 对象。
-                unitTestResult = new UnitTestResult(
-                    title,
-                    scriptName, scriptFilePath,
-                    dataTestResult);
-            }
-
+            let unitTestResult = ModuleUnitTestController.testModuleByScriptItem(
+                packageName, moduleClassName, scriptItem, localeCode);
             unitTestResults.push(unitTestResult);
         }
 
@@ -142,12 +104,51 @@ class ModuleUnitTestController {
      */
     static async testModuleByScriptFilePath(packageName, moduleClassName, scriptFilePath, localeCode = 'en') {
         let scriptItem = await ScriptParser.parseFile(scriptFilePath);
-        let unitTestController = new UnitTestController(
-            packageName,
-            moduleClassName,
-            scriptItem, localeCode);
+        let unitTestResult = ModuleUnitTestController.testModuleByScriptItem(
+            packageName, moduleClassName, scriptItem, localeCode);
+        return unitTestResult;
+    }
 
-        return unitTestController.test();
+    static testModuleByScriptItem(packageName, moduleClassName, scriptItem, localeCode = 'en') {
+        // 尝试获取单元测试的标题
+        // 标题被写到 Front-Matter 的 "!title" 属性里，如果
+        // 不存在该属性，则使用脚本文件的名称（即不带扩展名的文件名）作为标题。
+
+        let attributes = scriptItem.attributes;
+        let title = LocaleProperty.getValue(attributes, 'title', localeCode);
+        if (title === undefined) {
+            title = scriptItem.name;
+        }
+
+        let unitTestResult;
+
+        try {
+            // - 如果逻辑包或者逻辑模块找不到，则抛出 IllegalArgumentException 异常。
+            // - 如果**脚本里的**端口列表指定的端口或者子模块找不到，则抛出 ScriptParseException 异常。
+            let unitTestController = new UnitTestController(
+                packageName, moduleClassName, title,
+                scriptItem.attributes, scriptItem.configParameters,
+                scriptItem.portItems, scriptItem.dataRowItems,
+                scriptItem.name, scriptItem.filePath);
+
+            unitTestResult = unitTestController.test();
+
+        } catch (err) {
+            // 构造一个结果为异常的 DataTestResult 对象。
+            let dataTestResult = new DataTestResult(false,
+                undefined, undefined, undefined, undefined, err);
+
+            let scriptName = scriptItem.name;
+            let scriptFilePath = scriptItem.filePath;
+
+            // 构造 UnitTestResult 对象。
+            unitTestResult = new UnitTestResult(
+                title,
+                scriptName, scriptFilePath,
+                dataTestResult);
+        }
+
+        return unitTestResult;
     }
 }
 

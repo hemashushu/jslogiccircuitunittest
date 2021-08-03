@@ -17,7 +17,8 @@ describe('FrontMatterResolver test', () => {
         let resourcesDirectory = path.join(testDirectory, 'resources');
 
         let frontMatter1 = {
-            '!seq': true,
+            '!clock': 'D',
+            '!edge': 'posedge',
             '!title': 'This is title',
             bitWidth: 8,
             inputPinCount: 4
@@ -27,7 +28,8 @@ describe('FrontMatterResolver test', () => {
             frontMatter1, resourcesDirectory);
 
         assert(ObjectUtils.objectEquals(attributes, {
-            seq: true,
+            clock: 'D',
+            edge: 'posedge',
             title: 'This is title'
         }));
 
