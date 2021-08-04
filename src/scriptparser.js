@@ -158,8 +158,8 @@ class ScriptParser {
         let frontMatter = ObjectUtils.collapseKeyValueArray(frontMatterItems, 'key', 'value');
 
         // 提取头信息（Front-Matter）的 "属性" 和 "配置参数"
-        let externalFileDirectory = path.dirname(scriptFilePath);
-        let { attributes, configParameters } = await FrontMatterResolver.resolve(frontMatter, externalFileDirectory);
+        let scriptFileDirectory = path.dirname(scriptFilePath);
+        let { attributes, configParameters } = await FrontMatterResolver.resolve(frontMatter, scriptFileDirectory);
 
         // 检查数据单元格数量跟端口数量是否匹配
         let portsCount = portItems.length;

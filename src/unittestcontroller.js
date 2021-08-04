@@ -274,11 +274,11 @@ class UnitTestController {
                         return groupTestResult;
                     }
 
-                }else {
+                } else {
                     let rowTestResult;
 
                     if (this.sequentialMode) {
-                        switch(this.clockCheckEdge) {
+                        switch (this.clockCheckEdge) {
                             case EdgeType.both:
                                 {
                                     this.toggleClockSignal();
@@ -305,7 +305,7 @@ class UnitTestController {
                                 }
                         }
 
-                    }else {
+                    } else {
                         rowTestResult = this.testDataRowItem(dataRowItem, lineIdx, variableContext);
                     }
 
@@ -325,9 +325,9 @@ class UnitTestController {
 
         if (this.lastClockSignal === undefined) {
             currentClockSignal = this.signalLow;
-        }else if(Signal.equal(this.lastClockSignal, this.signalLow)) {
+        } else if (Signal.equal(this.lastClockSignal, this.signalLow)) {
             currentClockSignal = this.signalHigh;
-        }else {
+        } else {
             currentClockSignal = this.signalLow;
         }
 

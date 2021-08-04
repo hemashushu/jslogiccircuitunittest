@@ -28,10 +28,10 @@ class FrontMatterResolver {
      * - 如果读取文件失败，则抛出 IOException 异常。
      *
      * @param {*} frontMatter
-     * @param {*} externalFileDirectory
+     * @param {*} scriptFileDirectory
      * @returns {attributes, configParameters}
      */
-    static async resolve(frontMatter, externalFileDirectory) {
+    static async resolve(frontMatter, scriptFileDirectory) {
         let attributes = {};
         let configParameters = {};
 
@@ -49,7 +49,7 @@ class FrontMatterResolver {
         }
 
         let resolvedConfigParameters = await FrontMatterResolver.resolveConfigParameters(
-            configParameters, externalFileDirectory);
+            configParameters, scriptFileDirectory);
 
         return {
             attributes: attributes,
@@ -57,7 +57,7 @@ class FrontMatterResolver {
         };
     }
 
-    static async resolveConfigParameters(configParameters, externalFileDirectory) {
+    static async resolveConfigParameters(configParameters, scriptFileDirectory) {
         let resolvedConfigParameters = {};
 
         for(let key in configParameters) {
@@ -73,8 +73,8 @@ class FrontMatterResolver {
 
                 let sourceType = match[1];
                 let sourcePath = match[2].trim();
-                resolvedConfigParameters[key] = await FrontMatterResolver.resolveExternalValue(
-                    sourceType, sourcePath, externalFileDirectory);
+                resolvedConfigParameters[key] = await FrontMatterResolver.resolveFileValue(
+                    sourceType, sourcePath, scriptFileDirectory);
 
             }else {
                 resolvedConfigParameters[key] = value;
@@ -91,10 +91,10 @@ class FrontMatterResolver {
      *
      * @param {*} sourceType
      * @param {*} sourcePath
-     * @param {*} externalFileDirectory
+     * @param {*} scriptFileDirectory
      * @returns
      */
-    static async resolveExternalValue(sourceType, sourcePath, externalFileDirectory) {
+    static async resolveFileValue(sourceType, sourcePath, scriptFileDirectory) {
         if (!sourcePath.startsWith('file:')) {
             throw new ScriptParseException(
                 `Unsupport source type for front-matter field: ${key}.`,
@@ -106,19 +106,19 @@ class FrontMatterResolver {
         }
 
         let sourceFileName = sourcePath.substring('file:'.length);
-        let sourceFilePath = path.join(externalFileDirectory, sourceFileName);
+        let sourceFilePath = path.join(scriptFileDirectory, sourceFileName);
 
-        let sourceValue = await FrontMatterResolver.loadSourceValue(
+        let sourceValue = await FrontMatterResolver.loadSourceFile(
             sourceType, sourceFilePath);
 
         return sourceValue;
     }
 
-    static async loadSourceValue(sourceType, sourceFilePath) {
+    static async loadSourceFile(sourceType, sourceFilePath) {
         if (sourceType === 'object') {
-            return await FrontMatterResolver.loadObjectValue(sourceFilePath);
+            return await FrontMatterResolver.loadObjectSourceFile(sourceFilePath);
         }else if(sourceType === 'binary') {
-            return await FrontMatterResolver.loadBinaryValue(sourceFilePath);
+            return await FrontMatterResolver.loadBinarySourceFile(sourceFilePath);
         }
     }
 
@@ -131,7 +131,7 @@ class FrontMatterResolver {
      * @param {*} sourceFilePath
      * @returns 一个数据对象或者数据数组，
      */
-    static async loadObjectValue(sourceFilePath) {
+    static async loadObjectSourceFile(sourceFilePath) {
         let fileConfig = new YAMLFileConfig();
         let promiseFileConfig = new PromiseFileConfig(fileConfig);
 
@@ -157,7 +157,7 @@ class FrontMatterResolver {
      * @param {*} sourceFilePath
      * @returns Nodejs 的 Buffer 对象
      */
-    static async loadBinaryValue(sourceFilePath) {
+    static async loadBinarySourceFile(sourceFilePath) {
         // https://nodejs.org/api/fs.html#fs_fspromises_readfile_path_options
         try {
             return await fsPromise.readFile(sourceFilePath);

@@ -341,3 +341,31 @@ inputPinNumber: 4
 in_0 in_1 in_2 in_3 out
 0    0    0    1    0
 ```
+
+参数值支持数字、布尔（Boolean）以及字符串类型，如果需要传入对象类型或者字节数组类型，需要使用外部文件，详细见下节。
+
+#### 对象类型属性
+
+使用固定格式： `object(file:file_name.yaml)` 可以向一个属性传入对象类型的值，其中 'file_name.yaml' 为外部 YAML 文件的路径。路径必须是相对路径（相对测试脚本所在的文件夹）。示例：
+
+```
+---
+splitParts: object(file:parts.yaml)
+---
+in    out_1  out_0
+0b00  0      0
+0b01  0      1
+```
+
+#### 字节数组类型属性
+
+有时需要向模块传入一个字节数组（Byte Array），比如向一个 ROM 传入初始内容。可以使用固定格式： `binary(file:file_name.bin)` 向一个属性传入字节数组类型的值，其中 'file_name.bin' 为外部二进制文件的路径。路径必须是相对路径（相对测试脚本所在的文件夹）。示例：
+
+```
+---
+initData: binary(file:boot_loader.bin)
+---
+data_out
+0b00000000
+0b10000001
+```
