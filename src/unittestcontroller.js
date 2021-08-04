@@ -23,9 +23,9 @@ const UnitTestResult = require('./unittestresult');
 
 class UnitTestController {
     /**
-     * 构造测试控制器
-     * 需要先把待测试模块的逻辑包（及其逻辑模块）加载
+     * 构造指定模块（包括仿真模块）测试控制器
      *
+     * - 需要先把待测试模块的逻辑包（及其逻辑模块）加载
      * - 如果逻辑包或者逻辑模块找不到，则抛出 IllegalArgumentException 异常。
      * - 如果**脚本里的**端口列表指定的端口或者子模块找不到，则抛出 ScriptParseException 异常。
      *
@@ -46,7 +46,7 @@ class UnitTestController {
         this.scriptFilePath = scriptFilePath;
 
         let logicModule = LogicModuleFactory.createModuleInstance(
-            packageName, moduleClassName, 'unitTestlogicModule', configParameters);
+            packageName, moduleClassName, 'unitTestlogicModule', configParameters, true);
 
         // 构造端口读写列表
         this.testPins = this.generateTestPins(logicModule, portItems);

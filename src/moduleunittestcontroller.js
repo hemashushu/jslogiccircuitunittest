@@ -123,7 +123,7 @@ class ModuleUnitTestController {
                 `Can not find the specified package "${packageName}".`);
         }
 
-        let logicModuleItem = LogicModuleLoader.getLogicModuleItemByName(packageName, moduleClassName);
+        let logicModuleItem = LogicModuleLoader.getLogicModuleItemByName(packageName, moduleClassName, true);
         if (logicModuleItem === undefined) {
             throw new IllegalArgumentException(
                 `Can not find the specified module "${moduleClassName}".`);
