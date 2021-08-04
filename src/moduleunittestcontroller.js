@@ -12,59 +12,9 @@ const DataTestResult = require('./datatestresult');
 const ModuleUnitTestResult = require('./moduleunittestresult');
 
 class ModuleUnitTestController {
-    /**
-     * - 如果指定的逻辑包或者逻辑模块找不到，会抛出 IllegalArgumentException 异常。
-     *
-     * 解析脚本可能会抛出的异常：
-     * - 如果 YAML 对象文件解析失败，会抛出 ParseException。
-     * - 如果脚本有语法错误，会抛出 ScriptParseException 异常。
-     * - 如果参数外部文件不存在，则抛出 FileNotFoundException 异常。
-     * - 如果参数外部文件读取失败，则抛出 IOException 异常。
-     *
-     * @param {*} packageName
-     * @param {*} moduleClassName
-     * @returns
-     */
-    static async loadModuleUnitTestScriptItems(packageName, moduleClassName) {
-        let logicPackageItem = LogicPackageLoader.getLogicPackageItemByName(packageName);
-        if (logicPackageItem === undefined) {
-            throw new IllegalArgumentException(
-                `Can not find the specified package "${packageName}".`);
-        }
-
-        let logicModuleItem = LogicModuleLoader.getLogicModuleItemByName(packageName, moduleClassName);
-        if (logicModuleItem === undefined) {
-            throw new IllegalArgumentException(
-                `Can not find the specified module "${moduleClassName}".`);
-        }
-
-        let modulePath = moduleClassName.replace(/\$/g, path.sep);
-        let parentModulePath = path.dirname(modulePath);
-        let folderName = path.basename(modulePath);
-
-        let packageResourceLocator = PackageResourceLocator.create(logicPackageItem.packageDirectory);
-        let moduleResourceLocator = packageResourceLocator.createModuleResourceLocator(parentModulePath, folderName, false);
-        let moduleTestDirectory = moduleResourceLocator.getModuleTestDirectory();
-
-        if (!await PromiseFileUtils.exists(moduleTestDirectory)) {
-            return []; // test dir not found
-        }
-
-        let fileInfos = await PromiseFileUtils.list(moduleTestDirectory);
-        let scriptFileInfos = fileInfos.filter(item => {
-            return item.fileName.endsWith('.test.txt');
-        });
-
-        let scriptItems = [];
-        for (let scriptFileInfo of scriptFileInfos) {
-            let scriptItem = await ScriptParser.parseFile(scriptFileInfo.filePath);
-            scriptItems.push(scriptItem);
-        }
-
-        return scriptItems;
-    }
 
     /**
+     * 测试指定逻辑模块（包括仿真模块）的所有测试脚本。
      *
      * - 如果指定的逻辑包或者逻辑模块找不到，会抛出 IllegalArgumentException 异常。
      *
@@ -150,6 +100,63 @@ class ModuleUnitTestController {
 
         return unitTestResult;
     }
+
+    /**
+     * 加载指定逻辑模块（包括仿真模块）的所有测试脚本。
+     *
+     * - 如果指定的逻辑包或者逻辑模块找不到，会抛出 IllegalArgumentException 异常。
+     *
+     * 解析脚本可能会抛出的异常：
+     * - 如果 YAML 对象文件解析失败，会抛出 ParseException。
+     * - 如果脚本有语法错误，会抛出 ScriptParseException 异常。
+     * - 如果参数外部文件不存在，则抛出 FileNotFoundException 异常。
+     * - 如果参数外部文件读取失败，则抛出 IOException 异常。
+     *
+     * @param {*} packageName
+     * @param {*} moduleClassName
+     * @returns
+     */
+    static async loadModuleUnitTestScriptItems(packageName, moduleClassName) {
+        let logicPackageItem = LogicPackageLoader.getLogicPackageItemByName(packageName);
+        if (logicPackageItem === undefined) {
+            throw new IllegalArgumentException(
+                `Can not find the specified package "${packageName}".`);
+        }
+
+        let logicModuleItem = LogicModuleLoader.getLogicModuleItemByName(packageName, moduleClassName);
+        if (logicModuleItem === undefined) {
+            throw new IllegalArgumentException(
+                `Can not find the specified module "${moduleClassName}".`);
+        }
+
+        let modulePath = moduleClassName.replace(/\$/g, path.sep); // 层次型的模块使用 $ 符号分隔模块名
+        let parentModulePath = path.dirname(modulePath);
+        let folderName = path.basename(modulePath);
+
+        let packageResourceLocator = PackageResourceLocator.create(logicPackageItem.packageDirectory);
+        let moduleResourceLocator = packageResourceLocator.createModuleResourceLocator(
+            parentModulePath, folderName, logicModuleItem.isSimulation);
+
+        let moduleTestDirectory = moduleResourceLocator.getModuleTestDirectory();
+
+        if (!await PromiseFileUtils.exists(moduleTestDirectory)) {
+            return []; // test dir not found
+        }
+
+        let fileInfos = await PromiseFileUtils.list(moduleTestDirectory);
+        let scriptFileInfos = fileInfos.filter(item => {
+            return item.fileName.endsWith('.test.txt');
+        });
+
+        let scriptItems = [];
+        for (let scriptFileInfo of scriptFileInfos) {
+            let scriptItem = await ScriptParser.parseFile(scriptFileInfo.filePath);
+            scriptItems.push(scriptItem);
+        }
+
+        return scriptItems;
+    }
+
 }
 
 module.exports = ModuleUnitTestController;
