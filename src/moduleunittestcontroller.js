@@ -1,15 +1,16 @@
 const path = require('path');
 
 const { IllegalArgumentException } = require('jsexception');
-const { PromiseFileUtils } = require('jsfileutils');
 const { LocaleProperty } = require('jsfileconfig');
 const { LogicPackageLoader, LogicModuleLoader, PackageResourceLocator } = require('jslogiccircuit');
+const { PromiseFileUtils } = require('jsfileutils');
 
+const DataTestResult = require('./datatestresult');
+const FrontMatterResolver = require('./frontmatterresolver');
+const ModuleUnitTestResult = require('./moduleunittestresult');
 const ScriptParser = require('./scriptparser');
 const UnitTestController = require('./unittestcontroller');
 const UnitTestResult = require('./unittestresult');
-const DataTestResult = require('./datatestresult');
-const ModuleUnitTestResult = require('./moduleunittestresult');
 
 class ModuleUnitTestController {
 
@@ -64,8 +65,12 @@ class ModuleUnitTestController {
         // 标题被写到 Front-Matter 的 "!title" 属性里，如果
         // 不存在该属性，则使用脚本文件的名称（即不带扩展名的文件名）作为标题。
 
-        let attributes = scriptItem.attributes;
-        let title = LocaleProperty.getValue(attributes, 'title', localeCode);
+        let attributeItems = scriptItem.attributeItems;
+
+        let localeTitleMap = FrontMatterResolver.getLocaleFormatAttributeMapByTitle(
+            attributeItems, 'title');
+
+        let title = LocaleProperty.getValue(localeTitleMap, 'title', localeCode);
         if (title === undefined) {
             title = scriptItem.name;
         }
@@ -77,7 +82,7 @@ class ModuleUnitTestController {
             // - 如果**脚本里的**端口列表指定的端口或者子模块找不到，则抛出 ScriptParseException 异常。
             let unitTestController = new UnitTestController(
                 packageName, moduleClassName, title,
-                scriptItem.attributes, scriptItem.configParameters,
+                scriptItem.attributeItems, scriptItem.configParameters,
                 scriptItem.portItems, scriptItem.dataRowItems,
                 scriptItem.name, scriptItem.filePath);
 

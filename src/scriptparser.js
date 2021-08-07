@@ -1,7 +1,6 @@
 const path = require('path');
 
 const { PromiseTextFile } = require('jstextfile');
-const { ObjectUtils } = require('jsobjectutils');
 
 const DataRowItem = require('./datarowitem');
 const DataRowItemType = require('./datarowitemtype');
@@ -50,7 +49,7 @@ class ScriptParser {
      * @returns ScriptItem 对象
      */
     static async parse(textContent, scriptName = '', scriptFilePath = '') {
-        let frontMatterItems = []; // [{key:..., value:...},...]
+        let frontMatterItems = []; // [FrontMatterItem,...]
         let portItems;
 
         let dataRowItemStack = [];
@@ -121,8 +120,8 @@ class ScriptParser {
                         if (lineText === '---') {
                             state = 'expect-portlist';
                         } else {
-                            let frontMatter = FrontMatterParser.parseLine(lineIdx, lineText);
-                            frontMatterItems.push(frontMatter);
+                            let frontMatterItem = FrontMatterParser.parseLine(lineIdx, lineText);
+                            frontMatterItems.push(frontMatterItem);
                         }
                         break;
                     }
@@ -155,11 +154,9 @@ class ScriptParser {
             }
         }
 
-        let frontMatter = ObjectUtils.collapseKeyValueArray(frontMatterItems, 'key', 'value');
-
         // 提取头信息（Front-Matter）的 "属性" 和 "配置参数"
         let scriptFileDirectory = path.dirname(scriptFilePath);
-        let { attributes, configParameters } = await FrontMatterResolver.resolve(frontMatter, scriptFileDirectory);
+        let { attributeItems, configParameters } = await FrontMatterResolver.resolve(frontMatterItems, scriptFileDirectory);
 
         // 检查数据单元格数量跟端口数量是否匹配
         let portsCount = portItems.length;
@@ -209,7 +206,7 @@ class ScriptParser {
 
         let scriptItem = new ScriptItem(scriptName,
             scriptFilePath,
-            attributes, configParameters,
+            attributeItems, configParameters,
             portItems, rootDataRowItem.childDataRowItems);
 
         return scriptItem;

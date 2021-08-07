@@ -60,7 +60,7 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-code',
             'and_gate',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
@@ -79,7 +79,7 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-code',
             'and_gate_parameter',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
@@ -93,7 +93,7 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-config',
             'half_adder',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
@@ -107,7 +107,7 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-mix',
             'full_adder',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
@@ -121,7 +121,7 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-mix',
             'four_bit_adder',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
@@ -145,7 +145,7 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-code',
             'and_gate',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
@@ -170,7 +170,7 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-code',
             'and_gate',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
@@ -198,7 +198,30 @@ describe('UnitTestController Test - successful cases', () => {
             'package-by-code',
             'and_gate',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
+            scriptItem1.portItems, scriptItem1.dataRowItems,
+            scriptItem1.name, scriptItem1.filePath);
+
+        let { dataTestResult } = unitTestController1.test();
+        assert.equal(dataTestResult.pass, true);
+    });
+
+    it('Set port value in Front-Matter', async ()=>{
+        let scriptItem1 = await ScriptParser.parse(
+            '---\n' +
+            '!set: Cin=1\n' +
+            '!set: A=1\n' +
+            '---\n' +
+            'B Cout S\n' +
+            '0 1 0\n' +
+            '1 1 1');
+
+        // 构造测试控制器
+        let unitTestController1 = new UnitTestController(
+            'package-by-mix',
+            'full_adder',
+            'title',
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
@@ -217,7 +240,7 @@ describe('UnitTestController Test - failed cases', () => {
             new UnitTestController(
                 'no-this-package',
                 'or_gate', 'title',
-                scriptItem1.attributes, scriptItem1.configParameters,
+                scriptItem1.attributeItems, scriptItem1.configParameters,
                 scriptItem1.portItems, scriptItem1.dataRowItems,
                 scriptItem1.name, scriptItem1.filePath);
 
@@ -236,7 +259,7 @@ describe('UnitTestController Test - failed cases', () => {
             new UnitTestController(
                 'package-by-code',
                 'or_gate_ext', 'title',
-                scriptItem1.attributes, scriptItem1.configParameters,
+                scriptItem1.attributeItems, scriptItem1.configParameters,
                 scriptItem1.portItems, scriptItem1.dataRowItems,
                 scriptItem1.name, scriptItem1.filePath);
             assert.fail();
@@ -255,7 +278,7 @@ describe('UnitTestController Test - failed cases', () => {
                 'package-by-code',
                 'or_gate',
                 'title',
-                scriptItem1.attributes, scriptItem1.configParameters,
+                scriptItem1.attributeItems, scriptItem1.configParameters,
                 scriptItem1.portItems, scriptItem1.dataRowItems,
                 scriptItem1.name, scriptItem1.filePath);
             assert.fail();
@@ -275,7 +298,7 @@ describe('UnitTestController Test - failed cases', () => {
             new UnitTestController(
                 'package-by-code',
                 'or_gate', 'title',
-                scriptItem1.attributes, scriptItem1.configParameters,
+                scriptItem1.attributeItems, scriptItem1.configParameters,
                 scriptItem1.portItems, scriptItem1.dataRowItems,
                 scriptItem1.name, scriptItem1.filePath);
             assert.fail();
@@ -298,7 +321,7 @@ describe('UnitTestController Test - failed cases', () => {
             'package-by-code',
             'or_gate',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
@@ -335,7 +358,7 @@ describe('UnitTestController Test - failed cases', () => {
             'package-by-mix',
             'full_adder',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
@@ -359,7 +382,7 @@ describe('UnitTestController Test - failed cases', () => {
             'package-by-code',
             'or_gate',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
@@ -385,7 +408,7 @@ describe('UnitTestController Test - failed cases', () => {
             'package-by-code',
             'or_gate',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 
@@ -412,7 +435,7 @@ describe('UnitTestController Test - failed cases', () => {
             'package-by-code',
             'or_gate',
             'title',
-            scriptItem1.attributes, scriptItem1.configParameters,
+            scriptItem1.attributeItems, scriptItem1.configParameters,
             scriptItem1.portItems, scriptItem1.dataRowItems,
             scriptItem1.name, scriptItem1.filePath);
 

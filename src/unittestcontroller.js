@@ -9,8 +9,10 @@ const { ModuleStateController,
 const CombinedTestPin = require('./combinedtestpin');
 const DataCellItemType = require('./datacellitemtype');
 const DataRowItemType = require('./datarowitemtype');
+const DataRowParser = require('./datarowparser');
 const DataTestResult = require('./datatestresult');
 const EdgeType = require('./edgetype');
+const FrontMatterResolver = require('./frontmatterresolver');
 const ParseErrorCode = require('./parseerrorcode');
 const ParseErrorDetail = require('./parseerrordetail');
 const PortItem = require('./portitem');
@@ -27,14 +29,21 @@ class UnitTestController {
      *
      * - 需要先把待测试模块的逻辑包（及其逻辑模块）加载
      * - 如果逻辑包或者逻辑模块找不到，则抛出 IllegalArgumentException 异常。
-     * - 如果**脚本里的**端口列表指定的端口或者子模块找不到，则抛出 ScriptParseException 异常。
+     * - 如果端口列表指定的端口或者子模块找不到，则抛出 ScriptParseException 异常。
+     *
+     * 对于在头信息（Front-matter）里指定时钟引脚：
+     * - 如果指定的端口或者子模块找不到，则抛出 ScriptParseException 异常。
+     *
+     * 对于在头信息（Front-matter）里设定端口固定值：
+     * - 如果单元格数据格式有错误，会抛出 ScriptParseException 异常。
+     * - 如果是不允许的数据格式，会抛出 IllegalArgumentException 异常。
      *
      * @param {*} packageName
      * @param {*} moduleClassName
      */
     constructor(packageName, moduleClassName,
         title,
-        attributes, configParameters,
+        attributeItems, configParameters,
         portItems, dataRowItems,
         scriptName, scriptFilePath
     ) {
@@ -54,9 +63,25 @@ class UnitTestController {
         // 模块控制器（运行器）
         this.moduleStateController = new ModuleStateController(logicModule);
 
-        // 检查是否时序电路测试
-        let clockPortName = attributes['clock'];
-        let checkEdge = attributes['edge'];
+        // 检查是否需要设置时钟端口
+        this.setClockPort(attributeItems, logicModule);
+
+        // 检查是否需要设置端口固定值
+        this.setConstantPorts(attributeItems, logicModule);
+
+        // 生成 1-bit 高低电平信号
+        this.signalHigh = Signal.createHigh(1);
+        this.signalLow = Signal.createLow(1);
+    }
+
+    /**
+     * 检查是否需要设置时钟端口
+     * @param {*} attributeItems
+     * @param {*} logicModule
+     */
+    setClockPort(attributeItems, logicModule) {
+        let clockPortName = FrontMatterResolver.getAttributeByName(attributeItems, 'clock');
+        let checkEdge = FrontMatterResolver.getAttributeByName(attributeItems,'edge');
 
         if (clockPortName !== undefined && clockPortName !== null && clockPortName.trim() !== '') {
             let clockPortItem = PortListParser.convertToAbstractPortItem(clockPortName.trim());
@@ -67,12 +92,74 @@ class UnitTestController {
             this.clockCheckEdge = clockCheckEdge;
         }
 
-        this.sequentialMode = this.clockPin !== undefined;
+        // 对象私有成员
+        this.sequentialMode = (this.clockPin !== undefined);
         this.lastClockSignal = undefined;
+    }
 
-        // 生成 1-bit 高低电平信号
-        this.signalHigh = Signal.createHigh(1);
-        this.signalLow = Signal.createLow(1);
+    /**
+     * 检查是否需要设置端口固定值
+     * @param {*} attributeItems
+     * @param {*} logicModule
+     */
+    setConstantPorts(attributeItems, logicModule) {
+        // [{lineIdx, value}, ...]
+        let constantPortNames = FrontMatterResolver.getAttributeListByName(attributeItems, 'set');
+
+        // [{lineIdx, name, value}, ...]
+        let portNameValues = [];
+
+        for(let item of constantPortNames){
+            let text = item.value;
+            let portName = '';
+            let portValue = '';
+            let pos = text.indexOf('=');
+            if (pos > 0) {
+                portName = text.substring(0, pos).trim();
+                portValue = text.substring(pos + 1).trim();
+            }
+
+            if (portName === '' || portValue === '') {
+                throw new ScriptParseException(
+                    'The syntax of setting port constant value is error.',
+                    new ParseErrorDetail(ParseErrorCode.syntaxError,
+                        'set-port-constant-value-syntax-error', item.lineIdx));
+            }
+
+            portNameValues.push({
+                lineIdx: item.lineIdx,
+                name: portName,
+                value: portValue
+            });
+        }
+
+        for(let item of portNameValues) {
+            let portItem = PortListParser.convertToAbstractPortItem(item.name);
+            let testPin = this.generateTestPin(logicModule, portItem);
+            if (!testPin.isInput) {
+                throw new ScriptParseException(
+                    'The port which to be set constant value is not a input pin.',
+                    new ParseErrorDetail(ParseErrorCode.syntaxError,
+                        'set-port-constant-value-pin-error', item.lineIdx));
+            }
+
+            let dataCellItem = DataRowParser.convertToDataCellItem(item.lineIdx, item.value);
+
+            if (dataCellItem.type !== DataCellItemType.number &&
+                dataCellItem.type !== DataCellItemType.string &&
+                dataCellItem.type !== DataCellItemType.highZ) {
+                throw new ScriptParseException(
+                    'The data which to be set port constant value is error.',
+                    new ParseErrorDetail(ParseErrorCode.syntaxError,
+                        'set-port-constant-value-data-error', item.lineIdx));
+            }
+
+            let signal = UnitTestController.convertCellDataToSignal(
+                dataCellItem.type, dataCellItem.data, testPin.bitWidth,
+                item.lineIdx, undefined);
+
+            testPin.setSignal(signal);
+        }
     }
 
     /**

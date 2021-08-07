@@ -3,11 +3,13 @@ const path = require('path');
 const fsPromise = require('fs/promises');
 
 const { IOException, FileNotFoundException } = require('jsexception');
+const { ObjectUtils } = require('jsobjectutils');
 const { PromiseFileConfig, YAMLFileConfig } = require('jsfileconfig');
 
-const ScriptParseException = require('./scriptparseexception');
-const ParseErrorDetail = require('./parseerrordetail');
+const FrontMatterItem = require('./frontmatteritem');
 const ParseErrorCode = require('./parseerrorcode');
+const ParseErrorDetail = require('./parseerrordetail');
+const ScriptParseException = require('./scriptparseexception');
 
 /**
  * 提取头信息（Front-Matter）的 "属性" 和 "配置参数"
@@ -16,10 +18,12 @@ class FrontMatterResolver {
 
     /**
      *
-     * - 将头信息解析为 "属性" 和 "配置参数" 两个对象
+     * - 将头信息解析为 {attributeItems, configParameters} （"属性" 和 "配置参数"）对象
      * - 解析配置参数里的外部值：
      *   - object(file:file_name.yaml)
      *   - binary(file:file_name.bin)
+     *
+     * attributeItems 是 FrontMatterItem 对象数组，configParameters 是一个 Map.
      *
      * 异常：
      * - 如果 YAML 对象文件解析失败，会抛出 ParseException。
@@ -27,24 +31,27 @@ class FrontMatterResolver {
      * - 如果文件不存在，则抛出 FileNotFoundException 异常。
      * - 如果读取文件失败，则抛出 IOException 异常。
      *
-     * @param {*} frontMatter
+     * @param {*} frontMatterItems [FrontMatterItem, ...]
      * @param {*} scriptFileDirectory
-     * @returns {attributes, configParameters}
+     * @returns {attributeItems, configParameters}
      */
-    static async resolve(frontMatter, scriptFileDirectory) {
-        let attributes = {};
-        let configParameters = {};
+    static async resolve(frontMatterItems, scriptFileDirectory) {
+        let attributeItems = []; // List
+        let configParameters = {}; // Map
 
-        for(let key in frontMatter) {
-            let value = frontMatter[key];
+        for (let frontMatterItem of frontMatterItems) {
+            let { lineIdx, key, value } = frontMatterItem;
 
             // 以感叹号开始的键值对是属性
             if (key.startsWith('!')) {
                 let keyName = key.substring(1);
-                attributes[keyName] = value;
-            }else {
-                configParameters[key] = value;
 
+                // 重新包装 FrontMatterItem
+                let attributeItem = new FrontMatterItem(lineIdx, keyName, value);
+                attributeItems.push(attributeItem);
+
+            } else {
+                configParameters[key] = value;
             }
         }
 
@@ -52,7 +59,7 @@ class FrontMatterResolver {
             configParameters, scriptFileDirectory);
 
         return {
-            attributes: attributes,
+            attributeItems: attributeItems,
             configParameters: resolvedConfigParameters
         };
     }
@@ -60,7 +67,7 @@ class FrontMatterResolver {
     static async resolveConfigParameters(configParameters, scriptFileDirectory) {
         let resolvedConfigParameters = {};
 
-        for(let key in configParameters) {
+        for (let key in configParameters) {
             let value = configParameters[key];
 
             // 解析 object(file:...) 以及 binary(file:...) 表达式
@@ -76,7 +83,7 @@ class FrontMatterResolver {
                 resolvedConfigParameters[key] = await FrontMatterResolver.resolveFileValue(
                     sourceType, sourcePath, scriptFileDirectory);
 
-            }else {
+            } else {
                 resolvedConfigParameters[key] = value;
             }
         }
@@ -100,9 +107,9 @@ class FrontMatterResolver {
                 `Unsupport source type for front-matter field: ${key}.`,
                 new ParseErrorDetail(ParseErrorCode.syntaxError,
                     'unsupport-source-type', undefined, undefined, {
-                        key: key,
-                        sourceType: sourceType
-                    }));
+                    key: key,
+                    sourceType: sourceType
+                }));
         }
 
         let sourceFileName = sourcePath.substring('file:'.length);
@@ -117,7 +124,7 @@ class FrontMatterResolver {
     static async loadSourceFile(sourceType, sourceFilePath) {
         if (sourceType === 'object') {
             return await FrontMatterResolver.loadObjectSourceFile(sourceFilePath);
-        }else if(sourceType === 'binary') {
+        } else if (sourceType === 'binary') {
             return await FrontMatterResolver.loadBinarySourceFile(sourceFilePath);
         }
     }
@@ -144,8 +151,8 @@ class FrontMatterResolver {
                 `The front-matter object source file is empty.`,
                 new ParseErrorDetail(ParseErrorCode.emptyObjectSourceFile,
                     'empty-object-source-file', undefined, undefined, {
-                        filePath: sourceFilePath
-                    }));
+                    filePath: sourceFilePath
+                }));
         }
 
         return config;
@@ -166,12 +173,86 @@ class FrontMatterResolver {
                 throw new FileNotFoundException(
                     `Can not find the specified file: "${sourceFilePath}"`, err);
 
-            }else {
+            } else {
                 throw new IOException(
                     `Can not read file: "${sourceFilePath}".`, err);
             }
         }
     }
+
+    /**
+     * 根据 attribute 的名称获取其值。
+     *
+     * 如果有多个同名 attribute，则返回第一个值。
+     *
+     * @param {*} attributeItems
+     * @param {*} name
+     * @returns attribute 的值。如果指定名称的 attribute 找不到，则返回 undefined。
+     */
+    static getAttributeByName(attributeItems, name) {
+        let attributeList = FrontMatterResolver.getAttributeListByName(
+            attributeItems, name);
+        if (attributeList.length > 0) {
+            return attributeList[0].value;
+        }
+    }
+
+    /**
+     * 根据 attribute 的名称获取值列表。
+     *
+     * 因为 attribute 的名称可以重复，所以这个方法
+     * 返回的是一个 {lineIdx, value} 对象数组。
+     *
+     * @param {*} attributeItems
+     * @param {*} name
+     * @returns [{lineIdx, value}, ...]
+     */
+    static getAttributeListByName(attributeItems, name) {
+        return attributeItems.filter(item => {
+            return item.key === name;
+        }).map(item => {
+            return {
+                lineIdx: item.lineIdx,
+                value: item.value
+            };
+        });
+    }
+
+    /**
+     * 获取 attribute 当中具有 locale title 格式的值。
+     *
+     * locale title 格式如：
+     * - title: value2
+     * - title[zh_CN]: value3
+     * - title[locale_CODE]: valueN
+     *
+     * @param {*} attributeItems
+     * @param {*} title
+     * @returns
+     */
+    static getLocaleFormatAttributeMapByTitle(attributeItems, title) {
+        let localeTitlePrefix = title + '[';
+
+        // [{key:..., value:...},...]
+        let localeItems = attributeItems.filter(item => {
+            return item.key === title ||
+                item.key.startsWith(localeTitlePrefix);
+        }).map(item => {
+            return {
+                key: item.key,
+                value: item.value
+            };
+        });
+
+        // {
+        //     title: value1,
+        //     title[zh_CN]: value2,
+        //     title[locale_CODE]: value3
+        // }
+        let localeItemMap = ObjectUtils.collapseKeyValueArray(localeItems, 'key', 'value');
+        return localeItemMap;
+    }
+
 }
 
 module.exports = FrontMatterResolver;

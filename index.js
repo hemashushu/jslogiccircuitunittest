@@ -5,6 +5,7 @@ const DataCellItemType = require('./src/datacellitemtype');
 const DataRowItem = require('./src/datarowitem');
 const DataRowItemType = require('./src/datarowitemtype');
 const DataRowParser = require('./src/datarowparser');
+const FrontMatterItem = require('./src/frontmatteritem');
 const FrontMatterParser = require('./src/frontmatterparser');
 const FrontMatterResolver = require('./src/frontmatterresolver');
 const ModuleUnitTestController = require('./src/moduleunittestcontroller');
@@ -31,6 +32,7 @@ module.exports = {
     DataRowItem: DataRowItem,
     DataRowItemType: DataRowItemType,
     DataRowParser: DataRowParser,
+    FrontMatterItem: FrontMatterItem,
     FrontMatterParser: FrontMatterParser,
     FrontMatterResolver: FrontMatterResolver,
     ModuleUnitTestController: ModuleUnitTestController,

@@ -1,6 +1,7 @@
 const ScriptParseException = require('./scriptparseexception');
 const ParseErrorDetail = require('./parseerrordetail');
 const ParseErrorCode = require('./parseerrorcode');
+const FrontMatterItem = require('./frontmatteritem');
 
 class FrontMatterParser {
     /**
@@ -29,7 +30,7 @@ class FrontMatterParser {
      *
      * @param {*} lineIdx
      * @param {*} lineText 头信息文本的单一行内容
-     * @returns {key:..., value:...} 对象。
+     * @returns FrontMatterItem 对象
      */
     static parseLine(lineIdx, lineText) {
         let pos = lineText.indexOf(':');
@@ -86,10 +87,7 @@ class FrontMatterParser {
             }
         }
 
-        return {
-            key: key,
-            value: value
-        };
+        return new FrontMatterItem(lineIdx, key, value);
     }
 }
 
