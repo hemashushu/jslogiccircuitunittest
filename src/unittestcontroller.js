@@ -55,7 +55,7 @@ class UnitTestController {
         this.scriptFilePath = scriptFilePath;
 
         let logicModule = LogicModuleFactory.createModuleInstance(
-            packageName, moduleClassName, 'unitTestlogicModule', configParameters, true);
+            packageName, moduleClassName, moduleClassName, configParameters, true);
 
         // 构造端口读写列表
         this.testPins = this.generateTestPins(logicModule, portItems);
